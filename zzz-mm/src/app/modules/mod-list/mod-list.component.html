@@ -1,0 +1,39 @@
+<main id="mod-list">
+  <section class="header">
+    @if(blur()) {
+    <i class="fa-solid fa-eye-low-vision" (click)="toggleBlur()"></i> } @else {
+    <i class="fa-solid fa-eye" (click)="toggleBlur()"></i>
+    }
+    <i class="fa-solid fa-gear" (click)="openConfigDialog()"></i>
+  </section>
+  @if(selectedAgent()) {
+  <h1>{{ selectedAgent()?.name }} mods</h1>
+  <section class="list-wrapper">
+    @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
+    <div
+      class="mod-card"
+      (click)="openDetailsDialog(agentMod)"
+      [ngClass]="{ blur: blur(), active: agentMod.json?.active }"
+    >
+      <div class="image">
+        <img
+          [src]="agentMod.previewPath"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+          placeholder
+        />
+      </div>
+
+      <div class="content">
+        <span class="truncate">{{
+          agentMod.json?.modName || agentMod.folderName
+        }}</span>
+      </div>
+    </div>
+    } @empty { Agente não possue mods. }
+  </section>
+  } @else {
+  <span>Nenhum agente selecionado.</span>
+  }
+</main>

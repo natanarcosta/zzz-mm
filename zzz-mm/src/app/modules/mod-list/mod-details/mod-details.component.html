@@ -1,0 +1,64 @@
+<main id="mod-details">
+  @if(mod()) {
+  <div class="image">
+    <img [src]="imageUrl" loading="lazy" decoding="async" />
+  </div>
+  <section class="details">
+    <div>
+      <h1>{{ mod()?.json?.modName || mod()?.folderName }}</h1>
+      @if(hasGameBananaUrl) {
+      <i
+        class="fa-solid fa-cloud-arrow-down"
+        (click)="handleGetModDataFromGBanana()"
+      ></i>
+
+      }
+    </div>
+
+    <div>Character: {{ mod()?.json?.character }}</div>
+    <div>Description: {{ mod()?.json?.description || "None" }}</div>
+    <div>Active: {{ mod()?.json?.active ? "Yes" : "No" }}</div>
+
+    <div>
+      URL: {{ mod()?.json?.url }}
+      <i
+        class="fa-solid fa-arrow-up-right-from-square"
+        (click)="handleOpenExternalUrl()"
+      ></i>
+    </div>
+    <div>
+      Hotkeys:
+      <div class="keys">
+        @for (key of mod()?.json?.hotkeys; track $index) {
+        <span>{{ key.description }}: {{ key.key }}</span>
+        } @empty { None }
+      </div>
+    </div>
+  </section>
+  }
+  <section class="actions">
+    @if(hasGbananaImage()) {
+    <button mat-flat-button color="primary" (click)="handleSaveModDetails()">
+      Save Image
+    </button>
+    }
+
+    <button mat-flat-button color="primary" (click)="handleSaveMetadata()">
+      Save Metadata
+    </button>
+
+    @if(mod()?.json?.active){
+    <button mat-flat-button color="warn" (click)="handleRemoveMod()">
+      Disable
+    </button>
+    } @else {
+    <button mat-flat-button color="primary" (click)="handleActivateMod()">
+      Activate
+    </button>
+    }
+
+    <button mat-flat-button color="secondary" (click)="closeDialog()">
+      Close
+    </button>
+  </section>
+</main>

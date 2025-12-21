@@ -1,0 +1,53 @@
+/* You can add global styles to this file, and also import other style files */
+:root {
+  --main-color: #d8fa00;
+  --base-background: rgb(15 20 25 / 1);
+}
+
+#main-component {
+  display: flex;
+  background-color: var(--base-background);
+  color: #ffffff;
+}
+
+.mat-mdc-snack-bar-container {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.snackbar-success {
+  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mdc-snackbar-action-color: #c8e6c9;
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: #c62828;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mdc-snackbar-action-color: #ffcdd2;
+}
+
+.snackbar-info {
+  --mdc-snackbar-container-color: #424242;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mdc-snackbar-action-color: #e0e0e0;
+}
+
+/* Snackbar acima de dialogs */
+.cdk-overlay-pane.mat-mdc-snack-bar-container {
+  z-index: 2000 !important;
+}
+
+/* Dialog normalmente usa 1000 */
+.cdk-overlay-pane.mat-mdc-dialog-panel {
+  z-index: 1000;
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}

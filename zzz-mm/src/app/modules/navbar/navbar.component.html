@@ -1,0 +1,17 @@
+<main id="navbar">
+  <section class="navbar-container">
+    @for(agent of agents(); let i = $index; track agent.id) {
+    @if(agent.mods?.length) {
+    <div
+      class="navbar-item"
+      (click)="handleSelectAgent(agent)"
+      [ngClass]="{
+        selected: selectedAgent()?.name === agent.name,
+        grayscale: agent?.mods?.length === 0
+      }"
+    >
+      <img [ngSrc]="'/assets/char-portraits/' + agent.id + '.png'" fill />
+    </div>
+    } }
+  </section>
+</main>

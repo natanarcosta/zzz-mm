@@ -1,0 +1,34 @@
+#navbar {
+  .navbar-container {
+    height: 95dvh;
+    overflow: auto;
+
+    .navbar-item {
+      height: 70px;
+      width: 20dvw;
+      margin-bottom: 12px;
+      max-width: 230px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+
+      &.selected {
+        font-size: 1.1em;
+        font-weight: bold;
+
+        img {
+          border: 4px var(--main-color) solid;
+        }
+      }
+
+      &.grayscale {
+        img {
+          filter: grayscale(100%);
+        }
+      }
+    }
+  }
+}

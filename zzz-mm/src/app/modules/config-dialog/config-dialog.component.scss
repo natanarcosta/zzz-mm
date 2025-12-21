@@ -1,0 +1,21 @@
+#config-dialog {
+  padding: 24px;
+
+  .content {
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+  }
+
+  .actions {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin-right: 24px;
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 24px;
+  }
+}

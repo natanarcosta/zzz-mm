@@ -1,0 +1,32 @@
+<main id="config-dialog">
+  <section class="header">
+    <h1>App Configs</h1>
+  </section>
+  <section class="content">
+    @if(configsForm) {
+    <form [formGroup]="configsForm">
+      <mat-form-field appearance="fill">
+        <mat-label>Blur</mat-label>
+        <input type="text" matInput formControlName="blur" />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Source</mat-label>
+        <input type="text" matInput formControlName="sourcePath" />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Target</mat-label>
+        <input type="text" matInput formControlName="linkPath" />
+      </mat-form-field>
+    </form>
+    }
+  </section>
+  <section class="actions">
+    <button mat-flat-button color="primary" (click)="handleSaveConfig()">
+      Save
+    </button>
+
+    <button mat-flat-button color="secondary" (click)="closeDialog()">
+      Close
+    </button>
+  </section>
+</main>
