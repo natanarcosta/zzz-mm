@@ -14,7 +14,7 @@
     "electron:dev": "concurrently \"ng serve\" \"electron .\"",
     "electron:dist": "npm run build && electron-builder",
     "porcaria": "",
-    "electron:start": "ng build --base-href ./ && electron ."
+    "electron:start": "ng build --watch --base-href ./ && electron ."
   },
   "private": true,
   "dependencies": {
@@ -30,7 +30,11 @@
     "@angular/platform-server": "^17.3.0",
     "@angular/router": "^17.3.0",
     "@angular/ssr": "^17.3.17",
+    "7zip-bin": "^5.2.0",
+    "adm-zip": "^0.5.16",
     "express": "^4.18.2",
+    "extract-zip": "^2.0.1",
+    "node-unrar-js": "^2.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.3"
@@ -52,7 +56,8 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.4.2"
+    "typescript": "~5.4.2",
+    "unrar-promise": "^3.1.0"
   },
   "build": {
     "appId": "natanarc.zzz-mm",

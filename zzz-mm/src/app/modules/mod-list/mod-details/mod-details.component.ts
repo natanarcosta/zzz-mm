@@ -12,7 +12,7 @@ import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { AgentMode, ModJson } from '../../../models/agent.model';
+import { AgentMode } from '../../../models/agent.model';
 import {
   ElectronAPI,
   ElectronBridgeService,
@@ -97,7 +97,6 @@ export class ModDetailsComponent implements OnInit {
 
     this._gBananaService.getModData(id).subscribe({
       next: (data) => {
-        console.log(data);
         this.mod.set({
           ...this.mod(),
           folderName: this.mod()!.folderName,
@@ -147,40 +146,14 @@ export class ModDetailsComponent implements OnInit {
   handleActivateMod() {
     const mod = this.mod();
     if (!mod) return;
-    const json = mod.json;
-    if (!json) return;
 
-    this.mod.set({ ...mod, json: { ...json, active: true } });
-    this.handleSaveMetadata();
-
-    const source =
-      this._configService.config.source_mods_folder +
-      '\\' +
-      this.mod()?.folderName;
-
-    const target =
-      this._configService.config.mod_links_folder +
-      '\\' +
-      this.mod()?.folderName;
-
-    this._modManagerService.createModLink(source, target);
+    this._modManagerService.handleActivateMod(mod);
   }
 
   handleRemoveMod() {
     const mod = this.mod();
     if (!mod) return;
 
-    const json = mod.json;
-    if (!json) return;
-
-    this.mod.set({ ...mod, json: { ...json, active: false } });
-    this.handleSaveMetadata();
-
-    const target =
-      this._configService.config.mod_links_folder +
-      '\\' +
-      this.mod()?.folderName;
-
-    this._modManagerService.removeModLink(target);
+    this._modManagerService.handleRemoveMod(mod);
   }
 }

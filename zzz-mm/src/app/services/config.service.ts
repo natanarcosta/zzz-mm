@@ -125,6 +125,7 @@ export class ConfigService {
       const jsonContent = await this.readJsonFile(filePath);
       if (!jsonContent) continue;
 
+
       const character = jsonContent.character
         .toLowerCase()
         .replaceAll(' ', '-');

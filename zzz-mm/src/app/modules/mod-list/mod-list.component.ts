@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   inject,
@@ -14,16 +13,17 @@ import { Subject, takeUntil } from 'rxjs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ModDetailsComponent } from './mod-details/mod-details.component';
 import { ConfigService } from '../../services/config.service';
-import { NotificationService } from '../../services/notifications.service';
 import { ConfigDialogComponent } from '../config-dialog/config-dialog.component';
+import { MatButtonModule } from '@angular/material/button';
+import { ModManagerService } from '../../services/mod-manager.service';
+import { AddModComponent } from '../add-mod/add-mod.component';
 
 @Component({
   selector: 'app-mod-list',
   templateUrl: './mod-list.component.html',
   styleUrl: './mod-list.component.scss',
   standalone: true,
-  imports: [CommonModule, MatDialogModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, MatDialogModule, MatButtonModule],
 })
 export class ModListComponent implements OnInit, OnDestroy {
   private _mainService = inject(MainService);
@@ -31,6 +31,7 @@ export class ModListComponent implements OnInit, OnDestroy {
   private _dialog = inject(MatDialog);
   private _cdr = inject(ChangeDetectorRef);
   private _configService = inject(ConfigService);
+  private _modManagerService = inject(ModManagerService);
 
   public selectedAgent = signal<ZZZAgent | null>(null);
   public blur = signal<boolean>(false);
@@ -81,6 +82,23 @@ export class ModListComponent implements OnInit, OnDestroy {
       position: {
         right: '0',
         top: '0',
+      },
+    });
+  }
+
+  public handleActivateMod(mod: AgentMode) {
+    this._modManagerService.handleActivateMod(mod);
+  }
+
+  public handleDisableMod(mod: AgentMode) {
+    this._modManagerService.handleRemoveMod(mod);
+  }
+
+  public handleAddNewMod() {
+    this._dialog.open(AddModComponent, {
+      width: '40vw',
+      data: {
+        selectedAgent: this.selectedAgent(),
       },
     });
   }

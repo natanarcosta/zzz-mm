@@ -1,17 +1,60 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
 import { NotificationService } from './notifications.service';
+import { MainService } from './main.service';
+import { AgentMode, ZZZAgent } from '../models/agent.model';
+import { ConfigService } from './config.service';
 
 @Injectable({ providedIn: 'root' })
 export class ModManagerService {
   private _electronBridge = inject(ElectronBridgeService);
   private _notify = inject(NotificationService);
+  private _mainService = inject(MainService);
+  private _selectedAgent = signal<ZZZAgent | null>(null);
+  private _configService = inject(ConfigService);
 
   private get electronAPI(): ElectronAPI | null {
     return this._electronBridge.api;
   }
 
-  async createModLink(sourceFolder: string, modsFolder: string) {
+  modFolderPath(mod: AgentMode): string {
+    const diskPath =
+      this._configService.config.source_mods_folder + '\\' + mod.folderName;
+
+    return diskPath;
+  }
+
+  constructor() {
+    this._mainService.agentSelected.subscribe({
+      next: (agent) => this._selectedAgent.set(agent),
+    });
+  }
+
+  handleSaveMetadata(mod: AgentMode) {
+    const jsonPath = this.modFolderPath(mod) + '/mod.json';
+    this.electronAPI?.writeJsonFile(jsonPath, mod.json);
+
+    this._mainService.updateAgentMod(mod);
+    this._notify.success('Mod data saved successfuly');
+  }
+
+  handleActivateMod(mod: AgentMode) {
+    const json = mod.json;
+    if (!json) return;
+
+    mod = { ...mod, json: { ...json, active: true } };
+    this.handleSaveMetadata(mod);
+
+    const source =
+      this._configService.config.source_mods_folder + '\\' + mod.folderName;
+
+    const target =
+      this._configService.config.mod_links_folder + '\\' + mod.folderName;
+
+    this._createModLink(source, target);
+  }
+
+  private async _createModLink(sourceFolder: string, modsFolder: string) {
     const electronAPI = this.electronAPI;
     if (!electronAPI) return;
 
@@ -26,7 +69,22 @@ export class ModManagerService {
     }
   }
 
-  async removeModLink(linkPath: string) {
+  handleRemoveMod(mod: AgentMode) {
+    if (!mod) return;
+
+    const json = mod.json;
+    if (!json) return;
+
+    mod = { ...mod, json: { ...json, active: false } };
+    this.handleSaveMetadata(mod);
+
+    const target =
+      this._configService.config.mod_links_folder + '\\' + mod.folderName;
+
+    this._removeModLink(target);
+  }
+
+  private async _removeModLink(linkPath: string) {
     const electronAPI = this.electronAPI;
     if (!electronAPI) return;
 

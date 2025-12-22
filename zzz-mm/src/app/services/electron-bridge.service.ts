@@ -17,6 +17,8 @@ export interface ElectronAPI {
   removeSymlink(
     linkPath: string
   ): Promise<{ success: boolean; error?: string }>;
+  installMod(data: unknown): void;
+  getFilePath(file: File): string;
 }
 
 @Injectable({ providedIn: 'root' })

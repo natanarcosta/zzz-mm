@@ -1,7 +1,7 @@
 <main id="navbar">
   <section class="navbar-container">
     @for(agent of agents(); let i = $index; track agent.id) {
-    @if(agent.mods?.length) {
+    @if(agent.mods?.length || noMods) {
     <div
       class="navbar-item"
       (click)="handleSelectAgent(agent)"

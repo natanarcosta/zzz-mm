@@ -1,10 +1,10 @@
 #mod-list {
   padding: 16px;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
   flex-wrap: wrap;
   gap: 24px;
+  max-height: 95dvh;
+  overflow-x: auto;
 
   .header {
     position: absolute;
@@ -35,6 +35,12 @@
     user-select: none;
     cursor: pointer;
 
+    &:hover {
+      .image button {
+        display: inline;
+      }
+    }
+
     &.blur {
       img {
         filter: blur(10px);
@@ -54,6 +60,15 @@
         aspect-ratio: 1.5;
       }
       overflow: hidden;
+      position: relative;
+
+      button {
+        display: none;
+        position: absolute;
+        width: fit-content;
+        right: 0;
+        bottom: 0;
+      }
     }
 
     .content {

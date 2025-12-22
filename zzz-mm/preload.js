@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, shell } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
   readFolder: (folderPath) => ipcRenderer.invoke("read-folder", folderPath),
@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   createSymlink: (target, linkPath) =>
     ipcRenderer.invoke("create-symlink", { target, linkPath }),
   removeSymlink: (linkPath) => ipcRenderer.invoke("remove-symlink", linkPath),
+  installMod: (data) => ipcRenderer.invoke("install-mod", data),
+  getFilePath: (file) => webUtils.getPathForFile(file),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

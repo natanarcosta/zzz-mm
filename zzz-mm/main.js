@@ -3,6 +3,9 @@ const url = require("url");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
+const AdmZip = require("adm-zip");
+const { createExtractorFromFile } = require("node-unrar-js");
+const { unrar } = require("unrar-promise");
 
 try {
   require("electron-reloader")(module);
@@ -192,6 +195,113 @@ function createWindow() {
     } catch (err) {
       console.error("REMOVE_SYMLINK_ERROR:", err);
       return { success: false, error: err.message };
+    }
+  });
+
+  async function extractZip(zipPath, dest) {
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(dest, true);
+  }
+
+  async function extractRar(rarPath, dest) {
+    await unrar(rarPath, dest);
+  }
+
+  function getRootFolder(tempDir) {
+    const entries = fs.readdirSync(tempDir);
+
+    if (entries.length === 1) {
+      const fullPath = path.join(tempDir, entries[0]);
+      if (fs.statSync(fullPath).isDirectory()) {
+        return {
+          path: fullPath,
+          name: entries[0],
+          isWrapped: true,
+        };
+      }
+    }
+
+    return {
+      path: tempDir,
+      name: null,
+      isWrapped: false,
+    };
+  }
+
+  function resolveRootFolder(tempDir) {
+    const entries = fs.readdirSync(tempDir);
+
+    if (entries.length === 1) {
+      const fullPath = path.join(tempDir, entries[0]);
+      if (fs.statSync(fullPath).isDirectory()) {
+        return fullPath;
+      }
+    }
+
+    return tempDir;
+  }
+
+  function moveFolderContents(src, dest) {
+    for (const entry of fs.readdirSync(src)) {
+      const srcPath = path.join(src, entry);
+      const destPath = path.join(dest, entry);
+      fs.cpSync(srcPath, destPath, { recursive: true });
+    }
+  }
+
+  ipcMain.handle("install-mod", async (_, data) => {
+    const { archivePath, destinationPath, modData } = data;
+
+    if (!archivePath || !destinationPath || !modData?.modName) {
+      throw new Error("Payload inválido");
+    }
+
+    const ext = path.extname(archivePath).toLowerCase();
+    const tempDir = path.join(destinationPath, "__temp__");
+
+    console.error("INSTALL MOD");
+    console.error("archivePath:", archivePath);
+    console.error("exists:", fs.existsSync(archivePath));
+    console.error("destination:", destinationPath);
+
+    fs.mkdirSync(tempDir, { recursive: true });
+
+    try {
+      if (ext === ".zip") {
+        await extractZip(archivePath, tempDir);
+      } else if (ext === ".rar") {
+        await extractRar(archivePath, tempDir);
+      } else {
+        throw new Error("Formato não suportado");
+      }
+
+      const root = getRootFolder(tempDir);
+      const finalPath = path.join(destinationPath, modData.modName);
+
+      if (fs.existsSync(finalPath)) {
+        throw new Error("Já existe um mod com esse nome");
+      }
+
+      fs.mkdirSync(finalPath, { recursive: true });
+
+      // Preserva pasta raiz do mod
+      if (root.isWrapped) {
+        const targetFolder = path.join(finalPath, root.name);
+        fs.cpSync(root.path, targetFolder, { recursive: true });
+      } else {
+        // Edge case: arquivos soltos
+        moveFolderContents(root.path, finalPath);
+      }
+
+      const modJsonPath = path.join(finalPath, "mod.json");
+      fs.writeFileSync(modJsonPath, JSON.stringify(modData, null, 2), "utf-8");
+
+      return { success: true };
+    } catch (err) {
+      console.error("INSTALL MOD ERROR:", err);
+      throw err;
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 }

@@ -7,10 +7,15 @@
     <div>
       <h1>{{ mod()?.json?.modName || mod()?.folderName }}</h1>
       @if(hasGameBananaUrl) {
-      <i
-        class="fa-solid fa-cloud-arrow-down"
+
+      <button
+        mat-button
+        mat-flat-button
         (click)="handleGetModDataFromGBanana()"
-      ></i>
+      >
+        <i class="fa-solid fa-cloud-arrow-down"></i>
+        Fetch meta-data
+      </button>
 
       }
     </div>

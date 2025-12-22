@@ -1,5 +1,7 @@
 <main id="mod-list">
   <section class="header">
+    <i class="fa-solid fa-circle-plus" (click)="handleAddNewMod()"></i>
+
     @if(blur()) {
     <i class="fa-solid fa-eye-low-vision" (click)="toggleBlur()"></i> } @else {
     <i class="fa-solid fa-eye" (click)="toggleBlur()"></i>
@@ -12,7 +14,6 @@
     @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
     <div
       class="mod-card"
-      (click)="openDetailsDialog(agentMod)"
       [ngClass]="{ blur: blur(), active: agentMod.json?.active }"
     >
       <div class="image">
@@ -22,10 +23,30 @@
           decoding="async"
           fetchpriority="high"
           placeholder
+          (click)="openDetailsDialog(agentMod)"
         />
+        <div>
+          @if(agentMod?.json?.active){
+          <button
+            mat-flat-button
+            color="warn"
+            (click)="handleDisableMod(agentMod)"
+          >
+            Disable
+          </button>
+          } @else {
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="handleActivateMod(agentMod)"
+          >
+            Activate
+          </button>
+          }
+        </div>
       </div>
 
-      <div class="content">
+      <div class="content" (click)="openDetailsDialog(agentMod)">
         <span class="truncate">{{
           agentMod.json?.modName || agentMod.folderName
         }}</span>

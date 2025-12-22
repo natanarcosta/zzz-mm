@@ -10,7 +10,7 @@ export class MainService {
   private _selectedAgent = signal<ZZZAgent | null>(null);
   private _agents = signal<ZZZAgent[]>([]);
 
-  public agentSelected = new Subject<ZZZAgent | null>();
+  public agentSelected = new BehaviorSubject<ZZZAgent | null>(null);
   public agents$ = new BehaviorSubject<Array<ZZZAgent>>([]);
 
   constructor() {
@@ -28,7 +28,6 @@ export class MainService {
   selectAgent(agent: ZZZAgent): void {
     this._selectedAgent.set(agent);
     this.agentSelected.next(this._selectedAgent());
-    console.log('New Agent Selected: ', agent.name);
   }
 
   updateAgentMod(mod: AgentMode): void {
