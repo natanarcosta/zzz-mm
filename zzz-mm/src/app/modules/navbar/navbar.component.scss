@@ -17,6 +17,10 @@
       user-select: none;
       position: relative;
 
+      .agent-name {
+        display: none;
+      }
+
       &.selected {
         font-size: 1.1em;
         font-weight: bold;
@@ -30,6 +34,32 @@
       &.grayscale {
         img {
           filter: grayscale(100%);
+        }
+      }
+    }
+
+    &.grid {
+      width: 220px;
+      padding: 8px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      display: flex;
+      gap: 12px;
+
+      .navbar-item {
+        width: 90px;
+        img {
+          object-fit: cover;
+        }
+
+        .agent-name {
+          display: inline;
+          color: white;
+          -webkit-text-stroke: 3px black;
+          margin-top: auto;
+          z-index: 1;
+          font-size: 1.2rem;
+          paint-order: stroke fill;
         }
       }
     }

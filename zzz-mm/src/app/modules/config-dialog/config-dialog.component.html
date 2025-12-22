@@ -7,7 +7,10 @@
     <form [formGroup]="configsForm">
       <mat-form-field appearance="fill">
         <mat-label>Blur</mat-label>
-        <input type="text" matInput formControlName="blur" />
+        <mat-select formControlName="blur">
+          <mat-option [value]="true">Enabled</mat-option>
+          <mat-option [value]="false">Disabled</mat-option>
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="fill">
         <mat-label>Source</mat-label>
@@ -16,6 +19,13 @@
       <mat-form-field appearance="fill">
         <mat-label>Target</mat-label>
         <input type="text" matInput formControlName="linkPath" />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Navbar Type</mat-label>
+        <mat-select formControlName="navbarType">
+          <mat-option value="list">List</mat-option>
+          <mat-option value="grid">Grid</mat-option>
+        </mat-select>
       </mat-form-field>
     </form>
     }

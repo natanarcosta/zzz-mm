@@ -121,15 +121,6 @@ function createWindow() {
   });
 
   const CONFIG_PATH = path.join(app.getPath("userData"), "config.json");
-  const DEFAULT_CONFIG = {
-    source_mods_folder:
-      "C:\\Users\\natan\\AppData\\Roaming\\XXMI Launcher\\ZZMI\\Links",
-    mod_links_folder:
-      "C:\\Users\\natan\\AppData\\Roaming\\XXMI Launcher\\ZZMI\\Mods",
-    blur: true,
-  };
-
-  console.log(CONFIG_PATH);
 
   ipcMain.handle("load-config", async () => {
     if (!fs.existsSync(CONFIG_PATH)) {
@@ -137,6 +128,7 @@ function createWindow() {
         source_mods_folder: "",
         mod_links_folder: "",
         blur: false,
+        navbar_type: "list",
       };
 
       fs.writeFileSync(
@@ -238,19 +230,6 @@ function createWindow() {
       name: null,
       isWrapped: false,
     };
-  }
-
-  function resolveRootFolder(tempDir) {
-    const entries = fs.readdirSync(tempDir);
-
-    if (entries.length === 1) {
-      const fullPath = path.join(tempDir, entries[0]);
-      if (fs.statSync(fullPath).isDirectory()) {
-        return fullPath;
-      }
-    }
-
-    return tempDir;
   }
 
   function moveFolderContents(src, dest) {

@@ -4,11 +4,13 @@ import { MainService } from './main.service';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
 import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
 import { NotificationService } from './notifications.service';
+import { NavbarTypeEnum } from '../models/enums';
 
 export interface AppConfigs {
   source_mods_folder: string;
   mod_links_folder: string;
   blur: boolean;
+  navbar_type: NavbarTypeEnum;
 }
 
 @Injectable({
@@ -61,6 +63,7 @@ export class ConfigService {
 
     this.config = { ...this.config, ...partial };
     this.electronAPI.saveConfig(this.config);
+    this.configReady.next(this.config);
     this._notify.success('Configs saved successfuly');
   }
 
@@ -124,7 +127,6 @@ export class ConfigService {
 
       const jsonContent = await this.readJsonFile(filePath);
       if (!jsonContent) continue;
-
 
       const character = jsonContent.character
         .toLowerCase()

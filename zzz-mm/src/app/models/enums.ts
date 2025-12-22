@@ -1,4 +1,4 @@
-export enum NavbarType {
+export enum NavbarTypeEnum {
   GRID = 'grid',
   LIST = 'list',
 }

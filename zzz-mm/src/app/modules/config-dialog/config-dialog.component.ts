@@ -21,6 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ModManagerService } from '../../services/mod-manager.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -37,6 +38,7 @@ import { Subject, takeUntil } from 'rxjs';
     MatFormFieldModule,
     MatInputModule,
     MatProgressBarModule,
+    MatSelectModule,
   ],
 })
 export class ConfigDialogComponent implements OnInit, OnDestroy {
@@ -54,6 +56,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     blur: new FormControl(),
     sourcePath: new FormControl(),
     linkPath: new FormControl(),
+    navbarType: new FormControl(),
   });
 
   ngOnDestroy(): void {
@@ -70,6 +73,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           blur: config.blur,
           sourcePath: config.source_mods_folder,
           linkPath: config.mod_links_folder,
+          navbarType: config.navbar_type,
         });
         this._cdr.markForCheck();
       },
@@ -85,6 +89,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       blur: this.configsForm.controls.blur.value,
       source_mods_folder: this.configsForm.controls.sourcePath.value,
       mod_links_folder: this.configsForm.controls.linkPath.value,
+      navbar_type: this.configsForm.controls.navbarType.value,
     };
     this._configService.updateConfig({ ...config });
     this.closeDialog();

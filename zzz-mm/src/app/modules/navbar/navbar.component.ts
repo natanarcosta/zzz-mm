@@ -2,7 +2,8 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { ZZZAgent } from '../../models/agent.model';
 import { MainService } from '../../services/main.service';
-import { NavbarType } from '../../models/enums';
+import { NavbarTypeEnum } from '../../models/enums';
+import { ConfigService } from '../../services/config.service';
 
 @Component({
   selector: 'app-navbar',
@@ -15,16 +16,18 @@ export class NavbarComponent implements OnInit {
   public agents = signal<Array<ZZZAgent>>([]);
   public selectedAgent = signal<ZZZAgent | null>(null);
   public navbarStyle = signal('');
-  public navbarTypeEnum = NavbarType;
+  public navbarTypeEnum = NavbarTypeEnum;
   public noMods = effect(() => {
     return this.agents().some((a) => a.mods?.length);
   });
 
   private _mainService = inject(MainService);
+  private _configService = inject(ConfigService);
 
   ngOnInit(): void {
-    this.navbarStyle.set(NavbarType.LIST);
-    // this.navbarStyle.set(NavbarType.GRID);
+    this._configService.configReady.subscribe((config) =>
+      this.navbarStyle.set(config.navbar_type)
+    );
 
     this._mainService.agents$.subscribe((_agents) => {
       console.log('Agents');

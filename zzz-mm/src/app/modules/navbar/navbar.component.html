@@ -1,8 +1,10 @@
 <main id="navbar">
-  <section class="navbar-container">
+  <section
+    class="navbar-container"
+    [ngClass]="{ grid: navbarStyle() === navbarTypeEnum.GRID }"
+  >
     @for(agent of agents(); let i = $index; track agent.id) {
-    @if(agent.mods?.length || noMods) { @if(navbarStyle() ===
-    navbarTypeEnum.LIST) {
+    @if(agent.mods?.length || noMods) {
     <div
       class="navbar-item"
       (click)="handleSelectAgent(agent)"
@@ -12,7 +14,9 @@
       }"
     >
       <img [ngSrc]="'assets/char-portraits/' + agent.id + '.png'" fill />
+      <span class="agent-name">{{ agent.name }}</span>
     </div>
-    } } }
+
+    } }
   </section>
 </main>
