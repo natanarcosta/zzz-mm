@@ -203,8 +203,13 @@ function createWindow() {
     zip.extractAllTo(dest, true);
   }
 
+  const isDev = !app.isPackaged;
+  const unrarPath = isDev
+    ? undefined // usa sistema
+    : path.join(process.resourcesPath, "unrar", "unrar.exe");
+
   async function extractRar(rarPath, dest) {
-    await unrar(rarPath, dest);
+    await unrar(rarPath, dest, { unrarPath });
   }
 
   function getRootFolder(tempDir) {
