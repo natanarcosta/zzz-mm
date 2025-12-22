@@ -1,10 +1,9 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const url = require("url");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const AdmZip = require("adm-zip");
-const { createExtractorFromFile } = require("node-unrar-js");
 const { unrar } = require("unrar-promise");
 
 try {
@@ -250,11 +249,6 @@ function createWindow() {
     const ext = path.extname(archivePath).toLowerCase();
     const tempDir = path.join(destinationPath, "__temp__");
 
-    console.error("INSTALL MOD");
-    console.error("archivePath:", archivePath);
-    console.error("exists:", fs.existsSync(archivePath));
-    console.error("destination:", destinationPath);
-
     fs.mkdirSync(tempDir, { recursive: true });
 
     try {
@@ -293,6 +287,23 @@ function createWindow() {
       throw err;
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  ipcMain.handle("select-directory", async (event, options) => {
+    const result = await dialog.showOpenDialog(
+      BrowserWindow.getFocusedWindow(),
+      {
+        properties: ["openDirectory"], // This property enables folder selection
+        ...options,
+      }
+    );
+
+    if (result.canceled) {
+      return null; // or handle cancellation as needed
+    } else {
+      // result.filePaths is an array of selected paths
+      return result.filePaths[0]; // Return the first selected path
     }
   });
 }

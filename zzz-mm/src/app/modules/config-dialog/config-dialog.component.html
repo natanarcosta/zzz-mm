@@ -12,14 +12,30 @@
           <mat-option [value]="false">Disabled</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Source</mat-label>
-        <input type="text" matInput formControlName="sourcePath" />
-      </mat-form-field>
-      <mat-form-field appearance="fill">
-        <mat-label>Target</mat-label>
-        <input type="text" matInput formControlName="linkPath" />
-      </mat-form-field>
+      <div class="folder-picker-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
+          <mat-label>Source</mat-label>
+          <input
+            type="text"
+            matInput
+            formControlName="sourcePath"
+          /> </mat-form-field
+        ><i
+          class="fa-solid fa-folder-open"
+          (click)="handlePickFolder('source')"
+        ></i>
+      </div>
+      <div class="folder-picker-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
+          <mat-label>Target</mat-label>
+          <input type="text" matInput formControlName="linkPath" />
+        </mat-form-field>
+        <i
+          class="fa-solid fa-folder-open"
+          (click)="handlePickFolder('target')"
+        ></i>
+      </div>
+
       <mat-form-field appearance="fill">
         <mat-label>Navbar Type</mat-label>
         <mat-select formControlName="navbarType">

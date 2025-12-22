@@ -150,11 +150,11 @@ export class AddModComponent implements OnInit {
     };
 
     try {
-      await this.electronAPI.installMod(payload);
+      this.electronAPI.installMod(payload);
       this._notify.success('Mod instalado com sucesso');
       this._dialogRef.close(true);
     } catch (err) {
-      this._notify.error('Erro ao instalar o mod');
+      this._notify.error('Erro ao instalar o mod. ' + JSON.stringify(err));
       console.error(err);
     }
   }

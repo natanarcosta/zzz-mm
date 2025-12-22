@@ -4,13 +4,14 @@ import { ZZZAgent } from '../../models/agent.model';
 import { MainService } from '../../services/main.service';
 import { NavbarTypeEnum } from '../../models/enums';
 import { ConfigService } from '../../services/config.service';
+import { AgentNamePipe } from '../../shared/agent-name.pipe';
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
   standalone: true,
-  imports: [CommonModule, NgOptimizedImage],
+  imports: [CommonModule, NgOptimizedImage, AgentNamePipe],
 })
 export class NavbarComponent implements OnInit {
   public agents = signal<Array<ZZZAgent>>([]);

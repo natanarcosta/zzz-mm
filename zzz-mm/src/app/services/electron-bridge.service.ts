@@ -19,6 +19,7 @@ export interface ElectronAPI {
   ): Promise<{ success: boolean; error?: string }>;
   installMod(data: unknown): void;
   getFilePath(file: File): string;
+  selectDirectory(options?: any): Promise<string>;
 }
 
 @Injectable({ providedIn: 'root' })

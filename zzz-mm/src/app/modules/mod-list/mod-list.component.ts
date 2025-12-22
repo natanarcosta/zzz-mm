@@ -17,13 +17,14 @@ import { ConfigDialogComponent } from '../config-dialog/config-dialog.component'
 import { MatButtonModule } from '@angular/material/button';
 import { ModManagerService } from '../../services/mod-manager.service';
 import { AddModComponent } from '../add-mod/add-mod.component';
+import { AgentNamePipe } from '../../shared/agent-name.pipe';
 
 @Component({
   selector: 'app-mod-list',
   templateUrl: './mod-list.component.html',
   styleUrl: './mod-list.component.scss',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule, AgentNamePipe],
 })
 export class ModListComponent implements OnInit, OnDestroy {
   private _mainService = inject(MainService);
@@ -101,5 +102,9 @@ export class ModListComponent implements OnInit, OnDestroy {
         selectedAgent: this.selectedAgent(),
       },
     });
+  }
+
+  public handleRefreshMods() {
+    this._configService.populateCharacterMods();
   }
 }

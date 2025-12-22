@@ -233,7 +233,7 @@ export class ModDetailsComponent implements OnInit {
       this.mod()?.folderName;
 
     this.electronAPI?.downloadImage(previewPath, fileName, diskPath);
-    this._notify.success('Image saved successfuly');
+    this._notify.success('Image saved successfully');
   }
 
   handleSaveMetadata() {
@@ -243,7 +243,7 @@ export class ModDetailsComponent implements OnInit {
     if (!mod) return;
 
     this._mainService.updateAgentMod(mod);
-    this._notify.success('Mod data saved successfuly');
+    this._notify.success('Mod data saved successfully');
   }
 
   handleActivateMod() {

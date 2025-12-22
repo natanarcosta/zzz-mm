@@ -55,7 +55,7 @@ export class ConfigService {
 
     this.config = await this.electronAPI.loadConfig();
     this.configReady.next(this.config);
-    this._notify.info('Configs loaded successfuly');
+    this._notify.info('Configs loaded successfully');
   }
 
   updateConfig(partial: Partial<AppConfigs>) {
@@ -64,7 +64,7 @@ export class ConfigService {
     this.config = { ...this.config, ...partial };
     this.electronAPI.saveConfig(this.config);
     this.configReady.next(this.config);
-    this._notify.success('Configs saved successfuly');
+    this._notify.success('Configs saved successfully');
   }
 
   async readDirectory(folderPath: string, setFolders = false) {
@@ -162,5 +162,11 @@ export class ConfigService {
         console.log('Not found: ', jsonContent.character);
       }
     }
+    this._notify.info('Loaded mods successfully');
+  }
+
+  public async pickFolder(): Promise<string | undefined> {
+    const result = await this._electronBridge.api?.selectDirectory();
+    return result;
   }
 }

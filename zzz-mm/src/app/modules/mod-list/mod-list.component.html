@@ -1,5 +1,6 @@
 <main id="mod-list">
   <section class="header">
+    <i class="fa-solid fa-rotate-right" (click)="handleRefreshMods()"></i>
     <i class="fa-solid fa-circle-plus" (click)="handleAddNewMod()"></i>
 
     @if(blur()) {
@@ -9,7 +10,7 @@
     <i class="fa-solid fa-gear" (click)="openConfigDialog()"></i>
   </section>
   @if(selectedAgent()) {
-  <h1>{{ selectedAgent()?.name }} mods</h1>
+  <h1>{{ selectedAgent()!.name | agentName }} mods</h1>
   <section class="list-wrapper">
     @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
     <div

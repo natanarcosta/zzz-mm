@@ -7,6 +7,17 @@
       flex-direction: column;
       gap: 24px;
     }
+
+    .folder-picker-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      i {
+        margin-bottom: 1em;
+        cursor: pointer;
+      }
+    }
   }
 
   .actions {
@@ -18,4 +29,8 @@
     display: flex;
     gap: 24px;
   }
+}
+
+.w-90 {
+  width: 90%;
 }

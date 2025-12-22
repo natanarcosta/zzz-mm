@@ -14,7 +14,7 @@
       }"
     >
       <img [ngSrc]="'assets/char-portraits/' + agent.id + '.png'" fill />
-      <span class="agent-name">{{ agent.name }}</span>
+      <span class="agent-name">{{ agent.name | agentName }}</span>
     </div>
 
     } }

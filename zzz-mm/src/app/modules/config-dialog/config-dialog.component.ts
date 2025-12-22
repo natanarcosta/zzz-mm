@@ -104,4 +104,16 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           this.symLinkSyncProgress.set((value.current / value.total) * 100),
       });
   }
+
+  public async handlePickFolder(input: 'target' | 'source'): Promise<void> {
+    const control =
+      input === 'source'
+        ? this.configsForm.controls.sourcePath
+        : this.configsForm.controls.linkPath;
+
+    const chosenPath = await this._configService.pickFolder();
+    if (!chosenPath) return;
+
+    control.setValue(chosenPath);
+  }
 }

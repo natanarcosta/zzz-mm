@@ -1,3 +1,4 @@
+console.error("PRELOAD RODANDO");
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -16,9 +17,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
   removeSymlink: (linkPath) => ipcRenderer.invoke("remove-symlink", linkPath),
   installMod: (data) => ipcRenderer.invoke("install-mod", data),
   getFilePath: (file) => webUtils.getPathForFile(file),
+  selectDirectory: (options) => ipcRenderer.invoke("select-directory", options),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);
+
+window.addEventListener("dragover", (e) => {
+  console.error(e);
+  e.preventDefault();
+});
+
+window.addEventListener("drop", (e) => {
+  console.error(e);
+  e.preventDefault();
+});
 
 window.addEventListener("DOMContentLoaded", () => {
   window.dispatchEvent(new Event("electron-ready"));

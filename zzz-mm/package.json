@@ -11,7 +11,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:zzz-mm": "node dist/zzz-mm/server/server.mjs",
-    "electron:dev": "concurrently \"ng serve\" \"electron .\"",
+    "electron:dev": "concurrently \"ng serve --watch\" \"electron .\"",
     "electron:dist": "npm run build && electron-builder",
     "porcaria": "",
     "electron:start": "ng build --watch --base-href ./ && electron ."

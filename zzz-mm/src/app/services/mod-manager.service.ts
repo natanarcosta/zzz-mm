@@ -38,7 +38,7 @@ export class ModManagerService {
     this.electronAPI?.writeJsonFile(jsonPath, mod.json);
 
     this._mainService.updateAgentMod(mod);
-    this._notify.success('Mod data saved successfuly');
+    this._notify.success('Mod data saved successfully');
   }
 
   handleActivateMod(mod: AgentMod) {
