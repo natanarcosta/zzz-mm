@@ -22,15 +22,20 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
-  // mainWindow.loadURL(
-  //   url.format({
-  //     pathname: path.join(__dirname, `/dist/zzz-mm/browser/index.html`),
-  //     protocol: "file:",
-  //     slashes: true,
-  //   })
-  // );
-  mainWindow.webContents.openDevTools();
-  mainWindow.loadURL("http://localhost:4200/");
+  const isDev = !app.isPackaged;
+
+  if (isDev) {
+    mainWindow.loadURL("http://localhost:4200/");
+    mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadURL(
+      url.format({
+        pathname: path.join(__dirname, `/dist/zzz-mm/browser/index.html`),
+        protocol: "file:",
+        slashes: true,
+      })
+    );
+  }
 
   mainWindow.on("closed", function () {
     mainWindow = null;
@@ -203,7 +208,6 @@ function createWindow() {
     zip.extractAllTo(dest, true);
   }
 
-  const isDev = !app.isPackaged;
   const unrarPath = isDev
     ? undefined // usa sistema
     : path.join(process.resourcesPath, "unrar", "unrar.exe");
