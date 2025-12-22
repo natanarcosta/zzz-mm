@@ -104,7 +104,9 @@ export class ModListComponent implements OnInit, OnDestroy {
     });
   }
 
-  public handleRefreshMods() {
+  public async handleRefreshMods() {
+    await this._configService.loadFolders();
+
     this._configService.populateCharacterMods();
   }
 }

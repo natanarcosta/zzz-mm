@@ -46,8 +46,12 @@ export class ConfigService {
   }
 
   async initConfigs() {
-    await this.readDirectory(this.config.source_mods_folder, true);
+    await this.loadFolders();
     await this.populateCharacterMods();
+  }
+
+  async loadFolders() {
+    await this.readDirectory(this.config.source_mods_folder, true);
   }
 
   async loadConfig() {
