@@ -67,6 +67,12 @@
       "preload.js",
       "dist/zzz-mm/browser/**",
       "package.json"
-    ]
+    ],
+    "win": {
+      "icon": "build/favicon.ico",
+      "target": [
+        "nsis"
+      ]
+    }
   }
 }

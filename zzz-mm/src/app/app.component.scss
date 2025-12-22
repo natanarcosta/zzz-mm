@@ -1,1 +1,12 @@
+.titlebar {
+  -webkit-app-region: drag;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 
+  button {
+    -webkit-app-region: no-drag;
+  }
+}

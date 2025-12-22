@@ -14,8 +14,10 @@ try {
 let mainWindow;
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1366,
+    height: 768,
+    frame: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -35,6 +37,7 @@ function createWindow() {
         slashes: true,
       })
     );
+    mainWindow.setMenu(null);
   }
 
   mainWindow.on("closed", function () {
