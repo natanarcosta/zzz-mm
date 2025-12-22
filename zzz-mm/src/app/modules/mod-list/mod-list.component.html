@@ -18,11 +18,7 @@
     >
       <div class="image">
         <img
-          [src]="agentMod.previewPath"
-          loading="eager"
-          decoding="async"
-          fetchpriority="high"
-          placeholder
+          [src]="agentMod.previewPath || ''"
           (click)="openDetailsDialog(agentMod)"
         />
         <div>

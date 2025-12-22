@@ -30,7 +30,7 @@
 
   .mod-card {
     width: 15dvw;
-    border: 1px rgba(128, 128, 128, 0.5) solid;
+    border: 3px rgba(128, 128, 128, 0.5) solid;
     border-radius: 12px;
     user-select: none;
     cursor: pointer;
@@ -48,12 +48,15 @@
     }
 
     &.active {
-      border: 4px var(--main-color) solid;
+      border: 3px var(--main-color) solid;
       color: var(--main-color);
     }
 
     .image {
       border-bottom: 1px rgba(128, 128, 128, 0.5) solid;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+
       img {
         transition: scale 0.7s ease-out;
         width: 100%;

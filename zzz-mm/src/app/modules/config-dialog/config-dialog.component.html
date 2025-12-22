@@ -20,9 +20,24 @@
     </form>
     }
   </section>
+  @if(symLinkSyncProgress() > 0){
+  <section class="progress">
+    <mat-progress-bar
+      mode="determinate"
+      [value]="symLinkSyncProgress()"
+      color="primary"
+    ></mat-progress-bar>
+    {{ symLinkSyncProgress() + " %" }}
+  </section>
+  }
+
   <section class="actions">
     <button mat-flat-button color="primary" (click)="handleSaveConfig()">
       Save
+    </button>
+
+    <button mat-flat-button color="primary" (click)="handleSyncSymlinks()">
+      Sync Symlinks
     </button>
 
     <button mat-flat-button color="secondary" (click)="closeDialog()">

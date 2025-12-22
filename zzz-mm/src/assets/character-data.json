@@ -46,6 +46,10 @@
     { "name": "yixuan", "id": 155654 },
     { "name": "yuzuha", "id": 156729 },
     { "name": "zhao", "id": 160758 },
-    { "name": "zhu-yuan", "id": 122782 }
+    { "name": "zhu-yuan", "id": 122782 },
+    { "name": "unknown", "id": 0 },
+    { "name": "npcs", "id": 1 },
+    { "name": "belle", "id": 2 },
+    { "name": "wise", "id": 3 }
   ]
 }

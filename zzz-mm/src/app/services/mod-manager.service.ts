@@ -4,6 +4,7 @@ import { NotificationService } from './notifications.service';
 import { MainService } from './main.service';
 import { AgentMode, ZZZAgent } from '../models/agent.model';
 import { ConfigService } from './config.service';
+import { Subject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ModManagerService {
@@ -12,6 +13,8 @@ export class ModManagerService {
   private _mainService = inject(MainService);
   private _selectedAgent = signal<ZZZAgent | null>(null);
   private _configService = inject(ConfigService);
+
+  public symSyncProgress = new Subject<{ total: number; current: number }>();
 
   private get electronAPI(): ElectronAPI | null {
     return this._electronBridge.api;
@@ -95,5 +98,22 @@ export class ModManagerService {
     } else {
       this._notify.success('Link removido com sucesso!');
     }
+  }
+
+  async syncSymLinks() {
+    const target = this._configService.config.mod_links_folder;
+    const result = await this._configService.readDirectory(target);
+
+    this.symSyncProgress.next({ total: result.length, current: 0 });
+
+    result.forEach(async (folder, i) => {
+      const jsonPath = target + '\\' + folder + '\\' + 'mod.json';
+      const jsonContent = await this._configService.readJsonFile(jsonPath);
+      if (jsonContent) {
+        jsonContent.active = true;
+        this.electronAPI?.writeJsonFile(jsonPath, jsonContent);
+      }
+      this.symSyncProgress.next({ total: result.length, current: i + 1 });
+    });
   }
 }
