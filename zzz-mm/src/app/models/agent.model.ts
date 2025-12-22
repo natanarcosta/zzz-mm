@@ -1,10 +1,10 @@
 export interface ZZZAgent {
   name: string;
   id: number;
-  mods?: Array<AgentMode>;
+  mods?: Array<AgentMod>;
 }
 
-export interface AgentMode {
+export interface AgentMod {
   folderName: string;
   previewPath?: string;
   json?: ModJson;
@@ -20,4 +20,5 @@ export interface ModJson {
   url: string;
   hotkeys: Array<{ description: string; key: string }>;
   active: boolean;
+  updatedAt?: string;
 }

@@ -1,13 +1,15 @@
 #navbar {
   .navbar-container {
-    height: 98dvh;
+    height: 99dvh;
     overflow: auto;
+    width: 20dvw;
+    max-width: 290px;
 
     .navbar-item {
       height: 70px;
       width: 20dvw;
       margin-bottom: 12px;
-      max-width: 230px;
+      max-width: 270px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -18,6 +20,7 @@
       &.selected {
         font-size: 1.1em;
         font-weight: bold;
+        width: calc(20dvw - 8px);
 
         img {
           border: 4px var(--main-color) solid;

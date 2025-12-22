@@ -1,59 +1,109 @@
 <main id="mod-details">
   @if(mod()) {
   <div class="image">
-    <img [src]="imageUrl" loading="lazy" decoding="async" />
+    <img [src]="imageUrl()" loading="lazy" decoding="async" />
   </div>
   <section class="details">
     <div>
       <h1>{{ mod()?.json?.modName || mod()?.folderName }}</h1>
-      @if(hasGameBananaUrl) {
 
-      <button
-        mat-button
-        mat-flat-button
-        (click)="handleGetModDataFromGBanana()"
-      >
-        <i class="fa-solid fa-cloud-arrow-down"></i>
-        Fetch meta-data
-      </button>
+      @if(hasGameBananaUrl()) {
+
+      <div class="metadata-actions">
+        <button
+          mat-button
+          mat-flat-button
+          (click)="handleGetModDataFromGBanana()"
+        >
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          Fetch meta-data
+        </button>
+        @if(hasGbananaImage()) {
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="handleSaveModDetails()"
+        >
+          Save Image
+        </button>
+        <button mat-flat-button color="primary" (click)="handleSaveMetadata()">
+          Save Metadata
+        </button>
+
+        }
+      </div>
 
       }
     </div>
 
-    <div>Character: {{ mod()?.json?.character }}</div>
-    <div>Description: {{ mod()?.json?.description || "None" }}</div>
-    <div>Active: {{ mod()?.json?.active ? "Yes" : "No" }}</div>
+    @if(!editMode()) {
+    <div>
+      <i class="fa-solid fa-user"></i>Character: {{ mod()?.json?.character }}
+    </div>
+    <div>
+      <i class="fa-solid fa-align-left"></i>Description:
+      {{ mod()?.json?.description || "None" }}
+    </div>
+    <div>
+      <i class="fa-solid fa-check"></i>Active:
+      {{ mod()?.json?.active ? "Yes" : "No" }}
+    </div>
+    <div>
+      <i class="fa-regular fa-calendar"></i> Last Update:
+      {{ (mod()?.json?.updatedAt | date : "mediumDate") || "N/A" }}
+    </div>
 
     <div>
-      URL: {{ mod()?.json?.url }}
+      <i class="fa-solid fa-link"></i> URL:{{ mod()?.json?.url }}
       <i
         class="fa-solid fa-arrow-up-right-from-square"
         (click)="handleOpenExternalUrl()"
       ></i>
     </div>
     <div>
-      Hotkeys:
+      <i class="fa-regular fa-keyboard"></i> Hotkeys:
       <div class="keys">
         @for (key of mod()?.json?.hotkeys; track $index) {
         <span>{{ key.description }}: {{ key.key }}</span>
         } @empty { None }
       </div>
     </div>
+    } @else {
+    <form [formGroup]="form">
+      <mat-form-field>
+        <mat-label>Mod Name</mat-label>
+        <input type="text" matInput formControlName="modName" />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Character</mat-label>
+        <input
+          type="text"
+          matInput
+          formControlName="character"
+          [matAutocomplete]="auto"
+          #trigger
+        />
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+          @for (option of filteredAgents$ | async; track option.id) {
+          <mat-option [value]="option">{{ option.name }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Description</mat-label>
+        <input type="text" matInput formControlName="description" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Url</mat-label>
+        <input type="text" matInput formControlName="url" />
+      </mat-form-field>
+    </form>
+    }
   </section>
   }
   <section class="actions">
-    @if(hasGbananaImage()) {
-    <button mat-flat-button color="primary" (click)="handleSaveModDetails()">
-      Save Image
-    </button>
-    }
-
-    <button mat-flat-button color="primary" (click)="handleSaveMetadata()">
-      Save Metadata
-    </button>
-
-    @if(mod()?.json?.active){
-    <button mat-flat-button color="warn" (click)="handleRemoveMod()">
+    @if(!editMode()){ @if(mod()?.json?.active){
+    <button mat-flat-button color="warn" (click)="handleRemoveMod()" mat-button>
       Disable
     </button>
     } @else {
@@ -61,8 +111,20 @@
       Activate
     </button>
     }
+    <button mat-stroked-button color="secondary" (click)="toggleEditMode()">
+      Edit
+    </button>
+    } @else {
 
-    <button mat-flat-button color="secondary" (click)="closeDialog()">
+    <button mat-flat-button color="primary" (click)="handleSaveEdit()">
+      Save
+    </button>
+    <button mat-stroked-button color="primary" (click)="toggleEditMode()">
+      Cancel
+    </button>
+    }
+
+    <button mat-stroked-button color="secondary" (click)="closeDialog()">
       Close
     </button>
   </section>

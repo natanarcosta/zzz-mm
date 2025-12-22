@@ -6,7 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { AgentMode, ZZZAgent } from '../../models/agent.model';
+import { AgentMod, ZZZAgent } from '../../models/agent.model';
 import { CommonModule } from '@angular/common';
 import { MainService } from '../../services/main.service';
 import { Subject, takeUntil } from 'rxjs';
@@ -56,7 +56,7 @@ export class ModListComponent implements OnInit, OnDestroy {
     });
   }
 
-  public openDetailsDialog(mod: AgentMode): void {
+  public openDetailsDialog(mod: AgentMod): void {
     this._dialog.open(ModDetailsComponent, {
       width: '40vw',
       height: '100%',
@@ -86,11 +86,11 @@ export class ModListComponent implements OnInit, OnDestroy {
     });
   }
 
-  public handleActivateMod(mod: AgentMode) {
+  public handleActivateMod(mod: AgentMod) {
     this._modManagerService.handleActivateMod(mod);
   }
 
-  public handleDisableMod(mod: AgentMode) {
+  public handleDisableMod(mod: AgentMod) {
     this._modManagerService.handleRemoveMod(mod);
   }
 

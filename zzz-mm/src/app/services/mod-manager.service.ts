@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
 import { NotificationService } from './notifications.service';
 import { MainService } from './main.service';
-import { AgentMode, ZZZAgent } from '../models/agent.model';
+import { AgentMod, ZZZAgent } from '../models/agent.model';
 import { ConfigService } from './config.service';
 import { Subject } from 'rxjs';
 
@@ -20,7 +20,7 @@ export class ModManagerService {
     return this._electronBridge.api;
   }
 
-  modFolderPath(mod: AgentMode): string {
+  modFolderPath(mod: AgentMod): string {
     const diskPath =
       this._configService.config.source_mods_folder + '\\' + mod.folderName;
 
@@ -33,7 +33,7 @@ export class ModManagerService {
     });
   }
 
-  handleSaveMetadata(mod: AgentMode) {
+  handleSaveMetadata(mod: AgentMod) {
     const jsonPath = this.modFolderPath(mod) + '/mod.json';
     this.electronAPI?.writeJsonFile(jsonPath, mod.json);
 
@@ -41,7 +41,7 @@ export class ModManagerService {
     this._notify.success('Mod data saved successfuly');
   }
 
-  handleActivateMod(mod: AgentMode) {
+  handleActivateMod(mod: AgentMod) {
     const json = mod.json;
     if (!json) return;
 
@@ -72,7 +72,7 @@ export class ModManagerService {
     }
   }
 
-  handleRemoveMod(mod: AgentMode) {
+  handleRemoveMod(mod: AgentMod) {
     if (!mod) return;
 
     const json = mod.json;

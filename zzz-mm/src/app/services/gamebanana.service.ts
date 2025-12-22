@@ -32,7 +32,7 @@ export class GameBananaService {
             name: data[0],
             fullSizePreview: data[1],
             feedPreview: data[2],
-            updated_at: new Date(data[3]),
+            updated_at: new Date(+data[3] * 1000),
           };
         })
       );

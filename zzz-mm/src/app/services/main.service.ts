@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { AgentMode, ZZZAgent } from '../models/agent.model';
+import { AgentMod, ZZZAgent } from '../models/agent.model';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { agents } from '../../assets/character-data.json';
 
@@ -30,7 +30,7 @@ export class MainService {
     this.agentSelected.next(this._selectedAgent());
   }
 
-  updateAgentMod(mod: AgentMode): void {
+  updateAgentMod(mod: AgentMod): void {
     const agentId = this._selectedAgent()?.id;
     if (!agentId) return;
 

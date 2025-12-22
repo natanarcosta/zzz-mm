@@ -1,7 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
 :root {
-  --main-color: #d8fa00;
-  --base-background: rgb(15 20 25 / 1);
+  --main-color: #f7ff00;
+  --secondary-color: #ff4e00;
+  --accent-color: #00f0ff;
+  --base-background: #0a0a0a;
+}
+
+@font-face {
+  font-family: "din-medium";
+  src: url("assets/fonts/DIN-Medium.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
 }
 
 #main-component {
@@ -9,6 +18,10 @@
   background-color: var(--base-background);
   color: #ffffff;
   height: 100dvh;
+  font-family: "din-medium", roboto !important;
+  h1 {
+    font-family: "din-medium", roboto !important;
+  }
 }
 
 /* Scrollbar minimalista */
@@ -70,5 +83,6 @@ body {
 }
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  // font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: "din-medium", Roboto, sans-serif !important;
 }

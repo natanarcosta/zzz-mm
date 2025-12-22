@@ -1,7 +1,8 @@
 <main id="navbar">
   <section class="navbar-container">
     @for(agent of agents(); let i = $index; track agent.id) {
-    @if(agent.mods?.length || noMods) {
+    @if(agent.mods?.length || noMods) { @if(navbarStyle() ===
+    navbarTypeEnum.LIST) {
     <div
       class="navbar-item"
       (click)="handleSelectAgent(agent)"
@@ -12,6 +13,6 @@
     >
       <img [ngSrc]="'assets/char-portraits/' + agent.id + '.png'" fill />
     </div>
-    } }
+    } } }
   </section>
 </main>

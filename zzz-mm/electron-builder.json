@@ -1,0 +1,13 @@
+{
+  "appId": "com.natanarcosta.zzzmm",
+  "productName": "ZZZ Mod Manager",
+  "files": ["dist/**", "main.js", "preload.js", "package.json"],
+  "extraResources": [
+    {
+      "from": "node_modules/unrar-promise/bin",
+      "to": "unrar",
+      "filter": ["**/*"]
+    }
+  ],
+  "asarUnpack": ["**/unrar/**"]
+}

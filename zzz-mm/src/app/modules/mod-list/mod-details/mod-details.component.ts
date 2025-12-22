@@ -1,8 +1,9 @@
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -12,18 +13,27 @@ import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { AgentMode } from '../../../models/agent.model';
+import { AgentMod, ZZZAgent } from '../../../models/agent.model';
 import {
   ElectronAPI,
   ElectronBridgeService,
 } from '../../../services/electron-bridge.service';
 import { GameBananaService } from '../../../services/gamebanana.service';
-import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { MatButtonModule } from '@angular/material/button';
 import { ConfigService } from '../../../services/config.service';
 import { MainService } from '../../../services/main.service';
 import { NotificationService } from '../../../services/notifications.service';
 import { ModManagerService } from '../../../services/mod-manager.service';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+} from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { map, Observable, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-mod-details',
@@ -34,9 +44,12 @@ import { ModManagerService } from '../../../services/mod-manager.service';
   imports: [
     CommonModule,
     MatDialogModule,
-    NgOptimizedImage,
-    CdkOverlayOrigin,
     MatButtonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatAutocompleteModule,
   ],
 })
 export class ModDetailsComponent implements OnInit {
@@ -48,31 +61,94 @@ export class ModDetailsComponent implements OnInit {
   private _mainService = inject(MainService);
   private _notify = inject(NotificationService);
   private _modManagerService = inject(ModManagerService);
+  private _data: { mod: AgentMod } = inject(MAT_DIALOG_DATA);
 
-  private _data: { mod: AgentMode } = inject(MAT_DIALOG_DATA);
-  public mod = signal<AgentMode | null>(null);
+  public mod = signal<AgentMod | null>(null);
   public hasGbananaImage = signal<boolean>(false);
+  public editMode = signal<boolean>(false);
+  public form = new FormGroup({
+    character: new FormControl(),
+    description: new FormControl(),
+    url: new FormControl(),
+    modName: new FormControl(),
+  });
+  public filteredAgents$!: Observable<ZZZAgent[]>;
+  public agents!: ZZZAgent[];
+  public selectedAgent!: ZZZAgent;
+
+  public hasGameBananaUrl = computed(() => {
+    const url = this.mod()?.json?.url;
+    return !!url && url.startsWith('https://gamebanana');
+  });
+
+  public imageUrl = computed(() => {
+    const path = this.mod()?.previewPath || '';
+    return path;
+  });
 
   ngOnInit(): void {
     this.mod.set(this._data.mod);
+
+    this._mainService.agents$.subscribe({
+      next: (agents) => (this.agents = agents),
+    });
+    this._mainService.agentSelected.subscribe({
+      next: (data) => {
+        if (!data) return;
+        this.selectedAgent = data;
+      },
+    });
+
+    this.filteredAgents$ = this.form.controls.character.valueChanges.pipe(
+      startWith(''),
+      map((value) => {
+        const name = typeof value === 'string';
+        return name ? this._filter(value) : this.agents.slice();
+      })
+    );
+
     this._cdr.markForCheck();
+  }
+
+  ngAfterViewInit(): void {
+    const mod = this.mod();
+    if (!mod) return;
+
+    this.form.patchValue({
+      modName: mod.json?.modName,
+      character: this.selectedAgent,
+      description: mod.json?.description,
+      url: mod.json?.url,
+    });
+  }
+
+  displayFn(character: ZZZAgent): string {
+    return character && character.name ? character.name : '';
   }
 
   public closeDialog(): void {
     this._ref.close();
   }
 
+  private _filter(name: string): ZZZAgent[] {
+    const filterValue = name.toLowerCase();
+
+    return this.agents.filter((option) =>
+      option.name.toLowerCase().includes(filterValue)
+    );
+  }
+
+  public cancelEditMode(): void {
+    this.editMode.set(false);
+    this.form.reset();
+  }
+
+  public toggleEditMode(): void {
+    this.editMode.set(!this.editMode());
+  }
+
   get electronAPI(): ElectronAPI | null {
     return this._electronBridge.api;
-  }
-
-  get hasGameBananaUrl(): boolean | undefined {
-    return this.mod()?.json?.url.startsWith('https://gamebanana');
-  }
-
-  get imageUrl(): string {
-    const path = this.mod()?.previewPath || '';
-    return path;
   }
 
   get modFolderPath(): string {
@@ -82,6 +158,34 @@ export class ModDetailsComponent implements OnInit {
       this.mod()?.folderName;
 
     return diskPath;
+  }
+
+  handleSaveEdit(): void {
+    const data: {
+      character: string;
+      description: string;
+      url: string;
+      modName: string;
+    } = {
+      ...this.form.getRawValue(),
+      character: this.form.controls.character.value.name,
+    };
+    const mod = this.mod();
+    if (!mod || !mod.json) return;
+    this.mod.set({
+      ...mod,
+
+      json: {
+        ...mod.json,
+        character: data.character,
+        description: data.description,
+        url: data.url,
+        modName: data.modName,
+      },
+    });
+
+    this.editMode.set(false);
+    this.handleSaveMetadata();
   }
 
   handleOpenExternalUrl(): void {
@@ -97,20 +201,19 @@ export class ModDetailsComponent implements OnInit {
 
     this._gBananaService.getModData(id).subscribe({
       next: (data) => {
+        const mod = this.mod();
+        if (!mod || !mod.json) return;
+
         this.mod.set({
-          ...this.mod(),
-          folderName: this.mod()!.folderName,
+          ...mod,
           previewPath: this._gBananaService.getGBImage(id),
           json: {
-            ...this.mod()?.json,
-            character: this.mod()!.json!.character,
-            preview: this.mod()!.json!.preview,
-            url: this.mod()!.json!.url,
-            hotkeys: this.mod()!.json!.hotkeys,
+            ...mod.json,
             modName: data.name,
-            active: this.mod()!.json!.active,
+            updatedAt: data.updated_at.toISOString(),
           },
         });
+
         if (data.fullSizePreview) this.hasGbananaImage.set(true);
         this._notify.info('Gamebanana data loaded');
         this._cdr.markForCheck();

@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { AgentMode, ModJson, ZZZAgent } from '../models/agent.model';
+import { AgentMod, ModJson, ZZZAgent } from '../models/agent.model';
 import { MainService } from './main.service';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
 import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
@@ -136,7 +136,7 @@ export class ConfigService {
       const agent = this.agents().find((a) => a.name === character);
 
       if (agent) {
-        const agentMod: AgentMode = { folderName: folder };
+        const agentMod: AgentMod = { folderName: folder };
         if (isGBananaId)
           agentMod.id = Number(url.split('/')[url.split('/').length - 1]);
 
