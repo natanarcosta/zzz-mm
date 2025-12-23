@@ -22,6 +22,7 @@ import { ModManagerService } from '../../services/mod-manager.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { Subject, takeUntil } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-config-dialog',
@@ -38,6 +39,7 @@ import { Subject, takeUntil } from 'rxjs';
     MatInputModule,
     MatProgressBarModule,
     MatSelectModule,
+    MatTooltipModule,
   ],
 })
 export class ConfigDialogComponent implements OnInit, OnDestroy {
@@ -56,6 +58,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     linkPath: new FormControl(),
     navbarType: new FormControl(),
     autoFetch: new FormControl(),
+    disableOthers: new FormControl(),
   });
 
   ngOnDestroy(): void {
@@ -74,6 +77,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           linkPath: config.mod_links_folder,
           navbarType: config.navbar_type,
           autoFetch: config.auto_fetch,
+          disableOthers: config.disable_others,
         });
         this._cdr.markForCheck();
       },
@@ -91,6 +95,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       mod_links_folder: this.configsForm.controls.linkPath.value,
       navbar_type: this.configsForm.controls.navbarType.value,
       auto_fetch: this.configsForm.controls.autoFetch.value,
+      disable_others: this.configsForm.controls.disableOthers.value,
     };
     this._configService.updateConfig({ ...config });
     this.closeDialog();

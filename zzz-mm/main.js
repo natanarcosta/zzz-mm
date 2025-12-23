@@ -142,6 +142,7 @@ function createWindow() {
         blur: false,
         navbar_type: "list",
         auto_fetch: false,
+        disable_others: true,
       };
 
       fs.writeFileSync(

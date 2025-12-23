@@ -105,6 +105,22 @@ export class ModListComponent implements OnInit, OnDestroy {
 
   public async handleActivateMod(mod: AgentMod) {
     await this._modManagerService.handleActivateMod(mod);
+    if (this._configService.config.disable_others) {
+      const modIndex = this.selectedAgent()?.mods?.findIndex(
+        (_mod) => _mod.folderName === mod.folderName
+      );
+      if (modIndex && modIndex < 0) return;
+
+      const toDisable = this.selectedAgent()?.mods?.filter(
+        (_, i) => i !== modIndex
+      );
+      if (!toDisable?.length) return;
+
+      for (const disableMod of toDisable) {
+        if (!disableMod) continue;
+        await this.handleDisableMod(disableMod);
+      }
+    }
   }
 
   public async handleDisableMod(mod: AgentMod) {

@@ -5,14 +5,20 @@
   <section class="content">
     @if(configsForm) {
     <form [formGroup]="configsForm">
-      <mat-form-field appearance="fill">
-        <mat-label>Blur</mat-label>
-        <mat-select formControlName="blur">
-          <mat-option [value]="true">Enabled</mat-option>
-          <mat-option [value]="false">Disabled</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <div class="folder-picker-wrapper">
+      <div class="field-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
+          <mat-label>Blur</mat-label>
+          <mat-select formControlName="blur">
+            <mat-option [value]="true">Enabled</mat-option>
+            <mat-option [value]="false">Disabled</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <i
+          class="fa-solid fa-circle-question"
+          matTooltip="Blurs mod images everywhere"
+        ></i>
+      </div>
+      <div class="field-wrapper">
         <mat-form-field appearance="fill" class="w-90">
           <mat-label>Source</mat-label>
           <input
@@ -25,7 +31,7 @@
           (click)="handlePickFolder('source')"
         ></i>
       </div>
-      <div class="folder-picker-wrapper">
+      <div class="field-wrapper">
         <mat-form-field appearance="fill" class="w-90">
           <mat-label>Target</mat-label>
           <input type="text" matInput formControlName="linkPath" />
@@ -35,22 +41,45 @@
           (click)="handlePickFolder('target')"
         ></i>
       </div>
-
-      <mat-form-field appearance="fill">
-        <mat-label>Navbar Type</mat-label>
-        <mat-select formControlName="navbarType">
-          <mat-option value="list">List</mat-option>
-          <mat-option value="grid">Grid</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill">
-        <mat-label>Auto Fetch (Gamebanana)</mat-label>
-        <mat-select formControlName="autoFetch">
-          <mat-option [value]="true">Enabled</mat-option>
-          <mat-option [value]="false">Disabled</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <div class="field-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
+          <mat-label>Navbar Type</mat-label>
+          <mat-select formControlName="navbarType">
+            <mat-option value="list">List</mat-option>
+            <mat-option value="grid">Grid</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <i
+          class="fa-solid fa-circle-question"
+          matTooltip="Switches between agent selection types"
+        ></i>
+      </div>
+      <div class="field-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
+          <mat-label>Auto Fetch (Gamebanana)</mat-label>
+          <mat-select formControlName="autoFetch">
+            <mat-option [value]="true">Enabled</mat-option>
+            <mat-option [value]="false">Disabled</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <i
+          class="fa-solid fa-circle-question"
+          matTooltip="When adding a new mod, tries to fetch Gamebanana data when a proper URL is provided"
+        ></i>
+      </div>
+      <div class="field-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
+          <mat-label>Disable others</mat-label>
+          <mat-select formControlName="disableOthers">
+            <mat-option [value]="true">Enabled</mat-option>
+            <mat-option [value]="false">Disabled</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <i
+          class="fa-solid fa-circle-question"
+          matTooltip="When enabling a mod, disables all other mods from the chosen agent"
+        ></i>
+      </div>
     </form>
     }
   </section>

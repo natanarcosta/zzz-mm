@@ -13,6 +13,7 @@ export interface AppConfigs {
   blur: boolean;
   navbar_type: NavbarTypeEnum;
   auto_fetch: boolean;
+  disable_others: boolean;
 }
 
 interface CahceMod {
