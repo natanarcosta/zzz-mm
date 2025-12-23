@@ -31,7 +31,6 @@ export class NavbarComponent implements OnInit {
     );
 
     this._mainService.agents$.subscribe((_agents) => {
-      console.log('Agents');
       this.agents.set(_agents);
     });
 

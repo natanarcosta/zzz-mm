@@ -17,7 +17,7 @@ export class GameBananaService {
 
   private _baseUrl = 'https://api.gamebanana.com';
 
-  public getGBImage(modId: number | string): string {
+  public getGBananaImagePath(modId: number | string): string {
     return `https://images.gamebanana.com/img/embeddables/Mod_${modId}_sd_image.jpg`;
   }
 

@@ -96,18 +96,31 @@ export class ModListComponent implements OnInit, OnDestroy {
   }
 
   public handleAddNewMod() {
-    this._dialog.open(AddModComponent, {
-      width: '40vw',
-      data: {
-        selectedAgent: this.selectedAgent(),
-        mode: 'install',
-      },
-    });
+    this._dialog
+      .open(AddModComponent, {
+        width: '40vw',
+        data: {
+          selectedAgent: this.selectedAgent(),
+          mode: 'install',
+        },
+      })
+      .afterClosed()
+      .subscribe({
+        next: (value: boolean) => {
+          if (value) this._configService.refreshMods();
+        },
+      });
   }
 
-  public async handleRefreshMods() {
-    await this._configService.loadFolders();
+  public handleRefreshMods() {
+    this._configService.refreshMods().subscribe();
+  }
 
-    this._configService.populateCharacterMods();
+  toggleMod(mod: AgentMod) {
+    if (mod.json?.active) {
+      this.handleDisableMod(mod);
+    } else {
+      this.handleActivateMod(mod);
+    }
   }
 }

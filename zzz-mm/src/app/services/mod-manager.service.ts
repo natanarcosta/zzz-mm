@@ -38,11 +38,9 @@ export class ModManagerService {
 
     const now = new Date().toISOString();
     const json = mod.json;
-    console.log(json);
     if (!json) return;
     json.localUpdatedAt = now;
 
-    console.log(json);
 
     this.electronAPI?.writeJsonFile(jsonPath, json);
     this._mainService.updateAgentMod(mod);

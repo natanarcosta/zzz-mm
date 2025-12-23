@@ -2,16 +2,22 @@ import { inject, Injectable, signal } from '@angular/core';
 import { AgentMod, ModJson, ZZZAgent } from '../models/agent.model';
 import { MainService } from './main.service';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
-import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
+import { from, Observable, ReplaySubject } from 'rxjs';
 import { NotificationService } from './notifications.service';
 import { NavbarTypeEnum } from '../models/enums';
-import path from 'path';
+import { ModCacheService } from './mod-cache.service';
 
 export interface AppConfigs {
   source_mods_folder: string;
   mod_links_folder: string;
   blur: boolean;
   navbar_type: NavbarTypeEnum;
+  auto_fetch: boolean;
+}
+
+interface CahceMod {
+  cacheKey: string;
+  agentMod: AgentMod;
 }
 
 @Injectable({
@@ -21,10 +27,12 @@ export class ConfigService {
   public config!: AppConfigs;
   agents = signal<Array<ZZZAgent>>([]);
   folders = signal<Array<string>>([]);
+  attempts = 0;
 
   private _mainService = inject(MainService);
   private _electronBridge = inject(ElectronBridgeService);
   private _notify = inject(NotificationService);
+  private _modCacheService = inject(ModCacheService);
 
   public configReady = new ReplaySubject<AppConfigs>();
 
@@ -32,13 +40,7 @@ export class ConfigService {
     this._mainService.agents$.subscribe(async (a) => {
       this.agents.set(a);
 
-      await this.loadConfig();
-
-      if (this._electronBridge.isElectron && this.config) {
-        await this.initConfigs();
-      } else {
-        console.warn('Electron ainda não pronto');
-      }
+      this.loadConfig();
     });
   }
 
@@ -55,12 +57,28 @@ export class ConfigService {
     await this.readDirectory(this.config.source_mods_folder, true);
   }
 
-  async loadConfig() {
+  loadConfig() {
     if (!this.electronAPI) return;
 
-    this.config = await this.electronAPI.loadConfig();
-    this.configReady.next(this.config);
-    this._notify.info('Configs loaded successfully');
+    this._electronBridge.loadConfig().subscribe({
+      next: (config) => {
+        this.config = config;
+        this.configReady.next(this.config);
+        this._notify.info('Configs loaded successfully');
+
+        if (this._electronBridge.isElectron && this.config) {
+          this.initConfigs();
+        } else {
+          console.warn('Electron is not ready');
+          if (this.attempts >= 3) return;
+
+          setTimeout(() => {
+            this.attempts++;
+            this.initConfigs();
+          }, 1500);
+        }
+      },
+    });
   }
 
   updateConfig(partial: Partial<AppConfigs>) {
@@ -105,14 +123,21 @@ export class ConfigService {
     }
   }
 
+  private attachToAgent(mod: AgentMod) {
+    const character = mod.json!.character.toLowerCase().replaceAll(' ', '-');
+
+    const agent = this.agents().find((a) => a.name === character);
+    if (!agent) return;
+
+    agent.mods ??= [];
+    agent.mods.push(mod);
+  }
+
   async populateCharacterMods() {
     this.agents().forEach((agent) => (agent.mods = []));
-    console.log('Agents: ', this.agents().length);
-    console.log('Folders: ', this.folders().length);
 
     for (let folder of this.folders()) {
       try {
-        console.log(folder);
         if (folder.endsWith('.txt')) continue;
 
         const filePath =
@@ -122,6 +147,18 @@ export class ConfigService {
           folderPath,
           false
         );
+
+        const jsonContent = await this.readJsonFile(filePath);
+        if (!jsonContent) continue;
+
+        const cacheKey = `${folder}:${jsonContent.localUpdatedAt}`;
+
+        // 🔥 CACHE HIT
+        const cached = this._modCacheService.get(cacheKey);
+        if (cached) {
+          this.attachToAgent(cached);
+          continue;
+        }
 
         const hasPreview = folderContent.find(
           (content) => content === 'preview.jpg'
@@ -134,9 +171,6 @@ export class ConfigService {
             content.endsWith('.jpeg')
         );
 
-        const jsonContent = await this.readJsonFile(filePath);
-        if (!jsonContent) continue;
-
         const character = jsonContent.character
           .toLowerCase()
           .replaceAll(' ', '-');
@@ -147,7 +181,7 @@ export class ConfigService {
         const agent = this.agents().find((a) => a.name === character);
 
         if (agent) {
-          const agentMod: AgentMod = { folderName: folder };
+          const agentMod: AgentMod = { folderName: folder, json: jsonContent };
           if (isGBananaId)
             agentMod.id = Number(url.split('/')[url.split('/').length - 1]);
 
@@ -170,7 +204,8 @@ export class ConfigService {
 
           agentMod.json = jsonContent;
 
-          agent.mods?.push(agentMod);
+          this._modCacheService.set(cacheKey, agentMod);
+          this.attachToAgent(agentMod);
         } else {
           console.error('Not found: ', jsonContent.character);
           continue;
@@ -186,5 +221,10 @@ export class ConfigService {
   public async pickFolder(): Promise<string | undefined> {
     const result = await this._electronBridge.api?.selectDirectory();
     return result;
+  }
+
+  public refreshMods(): Observable<void> {
+    this.loadFolders();
+    return from(this.populateCharacterMods());
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { AgentMod, ZZZAgent } from '../models/agent.model';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { agents } from '../../assets/character-data.json';
 
 @Injectable({

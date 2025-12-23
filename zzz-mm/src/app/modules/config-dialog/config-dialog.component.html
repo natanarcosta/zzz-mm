@@ -43,6 +43,14 @@
           <mat-option value="grid">Grid</mat-option>
         </mat-select>
       </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Auto Fetch (Gamebanana)</mat-label>
+        <mat-select formControlName="autoFetch">
+          <mat-option [value]="true">Enabled</mat-option>
+          <mat-option [value]="false">Disabled</mat-option>
+        </mat-select>
+      </mat-form-field>
     </form>
     }
   </section>

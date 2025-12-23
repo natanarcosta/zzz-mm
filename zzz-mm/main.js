@@ -5,12 +5,18 @@ const fs = require("fs");
 const https = require("https");
 const AdmZip = require("adm-zip");
 const { unrar } = require("unrar-promise");
+const os = require("os");
+
+var nodeConsole = require("console");
+var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
 
 try {
   require("electron-reloader")(module);
 } catch {}
 
 let mainWindow;
+const isDev = !app.isPackaged;
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1366,
@@ -23,7 +29,6 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
-  const isDev = !app.isPackaged;
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:4200/");
@@ -37,8 +42,8 @@ function createWindow() {
       })
     );
 
-    mainWindow.webContents.openDevTools();
-    // mainWindow.setMenu(null);
+    // mainWindow.webContents.openDevTools();
+    mainWindow.setMenu(null);
   }
 
   mainWindow.on("closed", function () {
@@ -82,7 +87,8 @@ function createWindow() {
   ipcMain.handle(
     "download-image",
     async (_, { url, fileName, downloadPath }) => {
-      const localDiskPath = path.join(downloadPath, fileName);
+      const safeFileName = sanitizeFileName(fileName);
+      const localDiskPath = path.join(downloadPath, safeFileName);
 
       return new Promise((resolve, reject) => {
         const file = fs.createWriteStream(localDiskPath);
@@ -135,6 +141,7 @@ function createWindow() {
         mod_links_folder: "",
         blur: false,
         navbar_type: "list",
+        auto_fetch: false,
       };
 
       fs.writeFileSync(
@@ -242,6 +249,22 @@ function createWindow() {
     };
   }
 
+  function unwrapSingleFolder(dir) {
+    let current = dir;
+
+    while (true) {
+      const entries = fs.readdirSync(current);
+      if (entries.length !== 1) break;
+
+      const next = path.join(current, entries[0]);
+      if (!fs.statSync(next).isDirectory()) break;
+
+      current = next;
+    }
+
+    return current;
+  }
+
   function moveFolderContents(src, dest) {
     for (const entry of fs.readdirSync(src)) {
       const srcPath = path.join(src, entry);
@@ -250,52 +273,102 @@ function createWindow() {
     }
   }
 
-  ipcMain.handle("install-mod", async (_, data) => {
-    const { archivePath, destinationPath, modData } = data;
+  function sanitizeFileName(name) {
+    if (!name || typeof name !== "string") return "file";
 
-    if (!archivePath || !destinationPath || !modData?.modName) {
-      throw new Error("Payload inválido");
+    let sanitized = name
+      .replace(/[\/\\?%*:|"<>]/g, "_") // proibidos
+      .replace(/[\u0000-\u001F]/g, "") // controle
+      .trim();
+
+    // evita nomes vazios ou inválidos
+    if (!sanitized || sanitized === "." || sanitized === "..") {
+      sanitized = "file";
     }
 
-    const ext = path.extname(archivePath).toLowerCase();
-    const tempDir = path.join(destinationPath, "__temp__");
+    // Windows não gosta de nomes terminando com ponto ou espaço
+    sanitized = sanitized.replace(/[\. ]+$/, "");
 
-    fs.mkdirSync(tempDir, { recursive: true });
+    // limite seguro
+    if (sanitized.length > 120) {
+      const ext = path.extname(sanitized);
+      sanitized = sanitized.slice(0, 120 - ext.length) + ext;
+    }
+
+    return sanitized;
+  }
+
+  function sanitizeFolderName(name) {
+    if (!name || typeof name !== "string") return "mod";
+
+    // remove caracteres proibidos no Windows
+    let sanitized = name
+      .replace(/[\/\\?%*:|"<>]/g, "-") // separadores e proibidos
+      .replace(/[\u0000-\u001F]/g, "") // caracteres de controle
+      .replace(/\s+/g, " ") // normaliza espaços
+      .trim();
+
+    // fallback absoluto
+    if (!sanitized) {
+      return "mod";
+    }
+
+    // limite seguro de tamanho
+    if (sanitized.length > 80) {
+      sanitized = sanitized.slice(0, 80);
+    }
+
+    return sanitized;
+  }
+
+  ipcMain.handle("install-mod", async (_, data) => {
+    const { archivePath, destinationPath, modData } = data;
+    const tempDir = path.join(os.tmpdir(), "zzz-mm", "install_" + Date.now());
 
     try {
+      if (!archivePath || !destinationPath || !modData?.modName) {
+        return { success: false, error: "Payload inválido" };
+      }
+
+      const ext = path.extname(archivePath).toLowerCase();
+      fs.mkdirSync(tempDir, { recursive: true });
+
       if (ext === ".zip") {
         await extractZip(archivePath, tempDir);
       } else if (ext === ".rar") {
         await extractRar(archivePath, tempDir);
       } else {
-        throw new Error("Formato não suportado");
+        return { success: false, error: "Formato não suportado" };
       }
 
-      const root = getRootFolder(tempDir);
-      const finalPath = path.join(destinationPath, modData.modName);
+      const contentRoot = unwrapSingleFolder(tempDir);
+
+      const safeFolderName = sanitizeFolderName(modData.modName);
+      const finalPath = path.join(destinationPath, safeFolderName);
 
       if (fs.existsSync(finalPath)) {
-        throw new Error("Já existe um mod com esse nome");
+        return { success: false, error: "Já existe um mod com esse nome" };
       }
 
       fs.mkdirSync(finalPath, { recursive: true });
 
-      // Preserva pasta raiz do mod
-      if (root.isWrapped) {
-        const targetFolder = path.join(finalPath, root.name);
-        fs.cpSync(root.path, targetFolder, { recursive: true });
-      } else {
-        // Edge case: arquivos soltos
-        moveFolderContents(root.path, finalPath);
-      }
+      moveFolderContents(contentRoot, finalPath);
 
-      const modJsonPath = path.join(finalPath, "mod.json");
-      fs.writeFileSync(modJsonPath, JSON.stringify(modData, null, 2), "utf-8");
+      const modJson = {
+        ...modData,
+        folderName: safeFolderName,
+      };
+
+      fs.writeFileSync(
+        path.join(finalPath, "mod.json"),
+        JSON.stringify(modJson, null, 2),
+        "utf-8"
+      );
 
       return { success: true };
     } catch (err) {
       console.error("INSTALL MOD ERROR:", err);
-      throw err;
+      return { success: false, error: err.message };
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
@@ -320,15 +393,17 @@ function createWindow() {
 
   ipcMain.handle(
     "extract-mod-update",
-    async (event, { zipPath, targetFolder, baseModsDir }) => {
-      try {
-        const targetPath = path.join(baseModsDir, targetFolder);
+    async (_, { zipPath, targetFolder, baseModsDir }) => {
+      const targetPath = path.join(baseModsDir, targetFolder);
+      const tempDir = path.join(os.tmpdir(), "zzz-mm", "install_" + Date.now());
 
-        // 1) preparar temp
-        const tempDir = path.join(baseModsDir, "__temp_update__" + Date.now());
+      try {
+        myConsole.log("UPDATE MOD:");
+        myConsole.log(zipPath, targetFolder, baseModsDir);
+
         fs.mkdirSync(tempDir, { recursive: true });
 
-        // 2) extrair ZIP para temp
+        // 1) extrair
         const ext = path.extname(zipPath).toLowerCase();
         if (ext === ".zip") {
           await extractZip(zipPath, tempDir);
@@ -338,29 +413,40 @@ function createWindow() {
           throw new Error("Formato não suportado");
         }
 
-        // 3) validação mínima
-        if (!fs.existsSync(path.join(tempDir, "mod.json"))) {
-          throw new Error("Estrutura inválida");
+        // 2) detectar raiz real do update
+        // const root = getRootFolder(tempDir);
+        const root = unwrapSingleFolder(tempDir);
+
+        const updateEntries = fs.readdirSync(root.path);
+        if (updateEntries.length === 0) {
+          throw new Error("Pacote de update vazio");
         }
 
-        // 4) apagar conteúdo antigo
-        const files = fs.readdir(targetPath);
-        for (const file of files) {
-          await fs.remove(path.join(targetPath, file));
+        // 3) copiar arquivos do update (merge)
+        for (const file of updateEntries) {
+          const src = path.join(root.path, file);
+          const dest = path.join(targetPath, file);
+
+          fs.cpSync(src, dest, {
+            recursive: true,
+            force: true, // sobrescreve se existir
+          });
         }
 
-        // 5) mover extraído pra pasta original
-        const newFiles = fs.readdir(tempDir);
-        for (const file of newFiles) {
-          await fs.move(path.join(tempDir, file), path.join(targetPath, file));
+        // 4) copiar novos arquivos
+        for (const file of updateEntries) {
+          fs.cpSync(path.join(root.path, file), path.join(targetPath, file), {
+            recursive: true,
+          });
         }
-
-        // 6) apagar temp
-        fs.rmSync(tempDir, { recursive: true, force: true });
 
         return { success: true };
       } catch (err) {
+        console.error("EXTRACT_MOD_UPDATE_ERROR:", err);
         return { success: false, error: err.message };
+      } finally {
+        myConsole.log("Finally: ");
+        fs.rmSync(tempDir, { recursive: true, force: true });
       }
     }
   );

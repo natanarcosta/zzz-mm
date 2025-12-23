@@ -14,7 +14,7 @@
     "electron:dev": "concurrently \"ng serve --watch\" \"electron .\"",
     "electron:dist": "npm run build && electron-builder",
     "porcaria": "",
-    "electron:start": "ng build --watch --base-href ./ && electron ."
+    "electron:start": "concurrently \"ng build --watch\" \"electron .\""
   },
   "private": true,
   "dependencies": {

@@ -15,7 +15,6 @@ import {
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { NotificationService } from '../../services/notifications.service';
 import { AppConfigs, ConfigService } from '../../services/config.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -43,7 +42,6 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class ConfigDialogComponent implements OnInit, OnDestroy {
   private _dialogRef = inject(MatDialogRef<ConfigDialogComponent>);
-  private _notify = inject(NotificationService);
   private _configService = inject(ConfigService);
   private _config!: AppConfigs;
   private _cdr = inject(ChangeDetectorRef);
@@ -57,6 +55,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     sourcePath: new FormControl(),
     linkPath: new FormControl(),
     navbarType: new FormControl(),
+    autoFetch: new FormControl(),
   });
 
   ngOnDestroy(): void {
@@ -74,6 +73,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           sourcePath: config.source_mods_folder,
           linkPath: config.mod_links_folder,
           navbarType: config.navbar_type,
+          autoFetch: config.auto_fetch,
         });
         this._cdr.markForCheck();
       },
@@ -90,6 +90,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       source_mods_folder: this.configsForm.controls.sourcePath.value,
       mod_links_folder: this.configsForm.controls.linkPath.value,
       navbar_type: this.configsForm.controls.navbarType.value,
+      auto_fetch: this.configsForm.controls.autoFetch.value,
     };
     this._configService.updateConfig({ ...config });
     this.closeDialog();

@@ -28,6 +28,10 @@
     .metadata-actions {
       display: flex;
       gap: 12px;
+
+      mat-spinner {
+        width: 40px;
+      }
     }
 
     form {

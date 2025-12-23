@@ -1,12 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 import { AppConfigs } from './config.service';
+import { Observable, throwError, from } from 'rxjs';
 
 export interface ElectronAPI {
   readFolder(folderPath: string): Promise<string[]>;
   readJsonfile<T = any>(filePath: string): Promise<T>;
   loadImage(filePath: string): Promise<string>;
   openExternalUrl(url: string): void;
-  downloadImage(url: string, fileName: string, downloadPath: string): void;
+  downloadImage(
+    url: string,
+    fileName: string,
+    downloadPath: string
+  ): Promise<void>;
   writeJsonFile(filePath: string, data: unknown): void;
   loadConfig(): Promise<AppConfigs>;
   saveConfig(data: unknown): void;
@@ -17,7 +22,7 @@ export interface ElectronAPI {
   removeSymlink(
     linkPath: string
   ): Promise<{ success: boolean; error?: string }>;
-  installMod(data: unknown): void;
+  installMod(data: unknown): Promise<{ success: boolean; error?: string }>;
   getFilePath(file: File): string;
   selectDirectory(options?: any): Promise<string>;
   extractModForUpdate(
@@ -34,14 +39,23 @@ export class ElectronBridgeService {
   constructor() {
     if (typeof window === 'undefined') return;
 
-    if ((window as any).electronAPI) {
-      this._api.set((window as any).electronAPI as ElectronAPI);
-      return;
+    const win = window as any;
+
+    if (win.electronAPI) {
+      this._api.set(win.electronAPI as ElectronAPI);
+    } else {
+      window.addEventListener('electron-ready', () => {
+        this._api.set(win.electronAPI as ElectronAPI);
+      });
+    }
+  }
+
+  private call<T>(fn: () => Promise<T>): Observable<T> {
+    if (!this._api()) {
+      return throwError(() => new Error('Electron API unavailable'));
     }
 
-    window.addEventListener('electron-ready', () => {
-      this._api.set((window as any).electronAPI as ElectronAPI);
-    });
+    return from(fn());
   }
 
   get api(): ElectronAPI | null {
@@ -52,16 +66,33 @@ export class ElectronBridgeService {
     return !!this._api();
   }
 
+  loadConfig(): Observable<AppConfigs> {
+    const api = this.api;
+    return this.call(() => api!.loadConfig());
+  }
+
+  downloadImage(
+    url: string,
+    fileName: string,
+    downloadPath: string
+  ): Observable<void> {
+    const api = this.api;
+    return this.call(() => api!.downloadImage(url, fileName, downloadPath));
+  }
+
+  installMod(
+    payload: unknown
+  ): Observable<{ success: boolean; error?: string }> {
+    return this.call(() => this._api()!.installMod(payload));
+  }
+
   extractModForUpdate(
     zipPath: string,
     targetFolder: string,
     baseModsDir: string
-  ): Promise<{ success: boolean; error?: string }> {
-    console.log('extractModForUpdate com: ');
-    console.log(zipPath, targetFolder, baseModsDir);
-    return (
-      this.api?.extractModForUpdate(zipPath, targetFolder, baseModsDir) ??
-      Promise.resolve({ success: false, error: 'Bridge API unavailable' })
+  ): Observable<{ success: boolean; error?: string }> {
+    return this.call(() =>
+      this._api()!.extractModForUpdate(zipPath, targetFolder, baseModsDir)
     );
   }
 }

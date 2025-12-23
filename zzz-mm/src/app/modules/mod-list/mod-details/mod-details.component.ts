@@ -35,8 +35,9 @@ import {
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { map, Observable, startWith, Subject, takeUntil } from 'rxjs';
+import { finalize, map, Observable, startWith, Subject, takeUntil } from 'rxjs';
 import { AddModComponent } from '../../add-mod/add-mod.component';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-mod-details',
@@ -53,6 +54,7 @@ import { AddModComponent } from '../../add-mod/add-mod.component';
     MatInputModule,
     MatFormFieldModule,
     MatAutocompleteModule,
+    MatProgressBarModule,
   ],
 })
 export class ModDetailsComponent implements OnInit, OnDestroy {
@@ -82,6 +84,8 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   public selectedAgent!: ZZZAgent;
   public hasUpdate = signal(false);
   public availableUpdate = signal<Date | null>(null);
+  public isRefreshing = signal(false);
+  public isGettingGBananaData = signal(false);
 
   public hasGameBananaUrl = computed(() => {
     const url = this.mod()?.json?.url;
@@ -210,47 +214,51 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const id = this.mod()?.id;
     if (!id) return;
 
-    this._gBananaService.getModData(id).subscribe({
-      next: (data) => {
-        const mod = this.mod();
-        if (!mod || !mod.json || !data.updated_at) return;
+    this.isGettingGBananaData.set(true);
+    this._gBananaService
+      .getModData(id)
+      .pipe(finalize(() => this.isGettingGBananaData.set(false)))
+      .subscribe({
+        next: (data) => {
+          const mod = this.mod();
+          if (!mod || !mod.json || !data.updated_at) return;
 
-        const remoteUpdatedAt = data.updated_at.toISOString();
-        const januaryFirst = 1735700400000;
+          const remoteUpdatedAt = data.updated_at.toISOString();
+          const januaryFirst = 1735700400000;
 
-        const localUpdatedAt =
-          mod.json.localUpdatedAt ??
-          mod.json.localInstalledAt ??
-          new Date(0).toISOString();
+          const localUpdatedAt =
+            mod.json.localUpdatedAt ??
+            mod.json.localInstalledAt ??
+            new Date(0).toISOString();
 
-        if (
-          new Date(remoteUpdatedAt).getTime() >
-          new Date(localUpdatedAt).getTime()
-        ) {
-          this.hasUpdate.set(true);
-          this.availableUpdate.set(data.updated_at);
-        }
+          if (
+            new Date(remoteUpdatedAt).getTime() >
+            new Date(localUpdatedAt).getTime()
+          ) {
+            this.hasUpdate.set(true);
+            this.availableUpdate.set(data.updated_at);
+          }
 
-        this.mod.set({
-          ...mod,
-          previewPath: this._gBananaService.getGBImage(id),
-          json: {
-            ...mod.json,
-            modName: data.name,
-            remoteUpdatedAt,
-          },
-        });
+          this.mod.set({
+            ...mod,
+            previewPath: this._gBananaService.getGBananaImagePath(id),
+            json: {
+              ...mod.json,
+              modName: data.name,
+              remoteUpdatedAt,
+            },
+          });
 
-        if (data.fullSizePreview) {
-          this.hasGbananaImage.set(true);
-        }
+          if (data.fullSizePreview) {
+            this.hasGbananaImage.set(true);
+          }
 
-        this._notify.info('Gamebanana data loaded');
-      },
-    });
+          this._notify.info('Gamebanana data loaded');
+        },
+      });
   }
 
-  handleSaveModDetails(): void {
+  handleSaveModDetails() {
     if (!this.hasGbananaImage()) return;
 
     const fileName = 'preview.jpg';
@@ -262,7 +270,15 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       '\\' +
       this.mod()?.folderName;
 
-    this.electronAPI?.downloadImage(previewPath, fileName, diskPath);
+    this.isRefreshing.set(true);
+    console.log(previewPath);
+    console.log(fileName);
+    console.log(diskPath);
+    this._electronBridge
+      .downloadImage(previewPath, fileName, diskPath)
+      .subscribe({
+        next: () => this.handleRefreshMods(),
+      });
     this._notify.success('Image saved successfully');
   }
 
@@ -274,7 +290,10 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const now = new Date().toISOString();
     json.localUpdatedAt = now;
 
+    this.isRefreshing.set(true);
     this.electronAPI?.writeJsonFile(jsonPath, json);
+    this.handleRefreshMods();
+
     const mod = this.mod();
     if (!mod) return;
 
@@ -297,12 +316,31 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   }
 
   public handleUpdateExistindMod() {
-    this._dialog.open(AddModComponent, {
-      width: '40vw',
-      data: {
-        mode: 'update',
-        targetMod: this.mod(),
-      },
-    });
+    this._dialog
+      .open(AddModComponent, {
+        width: '40vw',
+        data: {
+          mode: 'update',
+          targetMod: this.mod(),
+        },
+      })
+      .afterClosed()
+      .subscribe({
+        next: (value: boolean) => {
+          if (value) this._configService.refreshMods();
+        },
+      });
+  }
+
+  public handleRefreshMods() {
+    this.isRefreshing.set(true);
+    this._configService
+      .refreshMods()
+      .pipe(
+        finalize(() => {
+          this.isRefreshing.set(false);
+        })
+      )
+      .subscribe();
   }
 }

@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -27,7 +34,10 @@ import { MainService } from '../../services/main.service';
 import { AgentMod, ZZZAgent } from '../../models/agent.model';
 import { map, Observable, startWith } from 'rxjs';
 import { AddModMode } from '../../models/types.model';
-import { join } from 'node:path';
+import {
+  GameBananaService,
+  GameBananaModData,
+} from '../../services/gamebanana.service';
 
 @Component({
   selector: 'app-add-mod',
@@ -46,7 +56,7 @@ import { join } from 'node:path';
     MatAutocompleteModule,
   ],
 })
-export class AddModComponent implements OnInit {
+export class AddModComponent implements OnInit, OnDestroy {
   @ViewChild('trigger')
   autocompleteTrigger!: MatAutocompleteTrigger;
 
@@ -55,12 +65,15 @@ export class AddModComponent implements OnInit {
   private _electronBridge = inject(ElectronBridgeService);
   private _dialogRef = inject(MatDialogRef<AddModComponent>);
   private _mainService = inject(MainService);
+  private _gBananaService = inject(GameBananaService);
+
   public data: {
     selectedAgent?: ZZZAgent;
     mode: AddModMode;
     targetMod?: AgentMod;
   } = inject(MAT_DIALOG_DATA);
   private _config!: AppConfigs;
+  private _gBananaData = signal<GameBananaModData | null>(null);
 
   public filteredAgents$!: Observable<ZZZAgent[]>;
   public agents!: ZZZAgent[];
@@ -82,6 +95,8 @@ export class AddModComponent implements OnInit {
   displayFn(character: ZZZAgent): string {
     return character && character.name ? character.name : '';
   }
+
+  ngOnDestroy(): void {}
 
   ngOnInit(): void {
     this._configService.configReady.subscribe({
@@ -119,16 +134,25 @@ export class AddModComponent implements OnInit {
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy'; // 👈 LINHA CRÍTICA
+    }
+
     this.isDragging = true;
   }
 
   onDragLeave(event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
+
     this.isDragging = false;
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
+    event.stopPropagation();
     this.isDragging = false;
 
     const file = event.dataTransfer?.files?.[0];
@@ -148,59 +172,126 @@ export class AddModComponent implements OnInit {
     if (this.data.mode === 'install' && !this.form.valid) return;
     if (!this.electronAPI) return;
 
-    const now = new Date().toISOString();
-
-    switch (this.data.mode) {
-      case 'install': {
-        const payload = {
-          archivePath: this.filePath,
-          destinationPath: this._config.source_mods_folder,
-          modData: {
-            ...this.form.value,
-            modName: this.form.controls.name.value,
-            character: (this.form.controls.character.value as any).name,
-            localInstalledAt: now,
-            localUpdatedAt: now,
-          },
-        };
-        console.log('Install com ');
-        console.log(payload);
-        this.electronAPI.installMod(payload);
-        this._notify.success('Mod instalado com sucesso');
-        this._dialogRef.close(true);
-        break;
-      }
-      case 'update': {
-        const mod = this.data.targetMod;
-        if (!mod) return;
-        const json = this.data.targetMod?.json;
-        if (!json) return;
-
-        const payload = {
-          archivePath: this.filePath,
-          destinationPath: this._config.source_mods_folder,
-          modData: {
-            ...json,
-            localUpdatedAt: now,
-          },
-        };
-
-        this._electronBridge
-          .extractModForUpdate(
-            payload.archivePath,
-            mod.folderName,
-            this._config.source_mods_folder
-          )
-          .then((result) => {
-            if (result.success) {
-              this._notify.success('Mod atualizado com sucesso');
-            } else {
-              this._notify.error('Falha no update: ' + result.error);
-            }
-          });
-
-        break;
+    if (this._config.auto_fetch) {
+      const url = this.form.controls.url.value;
+      const isGameBananaMod = url.includes('gamebanana.com');
+      if (isGameBananaMod) {
+        const id = Number(url.split('/')[url.split('/').length - 1]);
+        if (id && !isNaN(id)) {
+          this.handleAddGameBananMod(id);
+          return;
+        }
       }
     }
+
+    console.log('Chegou no switch');
+    switch (this.data.mode) {
+      case 'install':
+        this.installMod();
+        break;
+      case 'update':
+        this.updateMod();
+        break;
+    }
+  }
+
+  handleAddGameBananMod(id: number): void {
+    if (!id) return;
+
+    this._gBananaService.getModData(id).subscribe({
+      next: (data) => {
+        const image = this._gBananaService.getGBananaImagePath(id);
+        console.log(data);
+        this._gBananaData.set(data);
+        this.installMod();
+
+        // const fileName = 'preview.jpg';
+        // const previewPath = this.mod()?.previewPath;
+        // if (!previewPath) return;
+
+        // const diskPath =
+        //   this._configService.config.source_mods_folder + '\\' + data.name;
+
+        // this._electronBridge
+        //   .downloadImage(previewPath, fileName, diskPath)
+        //   .subscribe({
+        //     next: () => {},
+        //   });
+      },
+    });
+  }
+
+  installMod() {
+    if (!this.file || !this.filePath) return;
+    if (this.data.mode === 'install' && !this.form.valid) return;
+    if (!this.electronAPI) return;
+
+    const now = new Date().toISOString();
+    const payload = {
+      archivePath: this.filePath,
+      destinationPath: this._config.source_mods_folder,
+      modData: {
+        ...this.form.value,
+        modName: this.form.controls.name.value,
+        character: (this.form.controls.character.value as any).name,
+        localInstalledAt: now,
+        localUpdatedAt: now,
+      },
+    };
+
+    const gBananaData = this._gBananaData();
+    if (gBananaData) {
+      payload.modData.modName = gBananaData.name;
+    }
+
+    console.log('Payload: ', payload);
+
+    this._electronBridge.installMod(payload).subscribe({
+      next: (value) => {
+        if (value.success) {
+          this._configService.refreshMods();
+          this._notify.success('Mod instalado com sucesso');
+          this._dialogRef.close(true);
+        }
+      },
+    });
+  }
+
+  updateMod() {
+    if (!this.file || !this.filePath) return;
+    if (!this.electronAPI) return;
+
+    const mod = this.data.targetMod;
+    if (!mod) return;
+    const json = this.data.targetMod?.json;
+    if (!json) return;
+
+    const now = new Date().toISOString();
+
+    const payload = {
+      archivePath: this.filePath,
+      destinationPath: this._config.source_mods_folder,
+      modData: {
+        ...json,
+        localUpdatedAt: now,
+      },
+    };
+
+    this._electronBridge
+      .extractModForUpdate(
+        payload.archivePath,
+        mod.folderName,
+        this._config.source_mods_folder
+      )
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this._notify.success('Mod atualizado com sucesso');
+            this._dialogRef.close(true);
+          } else {
+            this._notify.error('Falha no update: ' + result.error);
+          }
+        },
+      });
   }
 }

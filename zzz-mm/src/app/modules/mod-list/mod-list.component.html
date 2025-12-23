@@ -1,4 +1,4 @@
-<main id="mod-list">
+<main id="mod-list" [ngClass]="{ 'min-h': !selectedAgent() }">
   <section class="header">
     <i class="fa-solid fa-rotate-right" (click)="handleRefreshMods()"></i>
     <i class="fa-solid fa-circle-plus" (click)="handleAddNewMod()"></i>
@@ -10,51 +10,58 @@
     <i class="fa-solid fa-gear" (click)="openConfigDialog()"></i>
   </section>
   @if(selectedAgent()) {
-  <h1>{{ selectedAgent()!.name | agentName }} mods</h1>
+  <h1>
+    {{ selectedAgent()!.name | agentName }} mods
+    <span class="count">{{ selectedAgent()?.mods?.length }}</span>
+  </h1>
   <section class="list-wrapper">
     @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
-    <div
-      class="mod-card"
-      [ngClass]="{ blur: blur(), active: agentMod.json?.active }"
-    >
+    <div class="mod-card" [ngClass]="{ active: agentMod.json?.active }">
       <div class="image">
-        <img
-          [src]="
-            agentMod.previewPath ||
-            'assets/char-portraits/' + selectedAgent()!.id + '.png'
-          "
-          (click)="openDetailsDialog(agentMod)"
-        />
-        <div>
-          @if(agentMod?.json?.active){
+        <img [src]="agentMod.previewPath" />
+
+        <!-- OVERLAY -->
+        <div class="overlay">
           <button
-            mat-flat-button
-            color="warn"
-            (click)="handleDisableMod(agentMod)"
+            class="action primary"
+            [ngClass]="{ danger: agentMod.json?.active }"
+            (click)="toggleMod(agentMod); $event.stopPropagation()"
           >
-            Disable
+            {{ agentMod.json?.active ? "Disable" : "Activate" }}
           </button>
-          } @else {
+
           <button
-            mat-flat-button
-            color="primary"
-            (click)="handleActivateMod(agentMod)"
+            class="action secondary"
+            (click)="openDetailsDialog(agentMod); $event.stopPropagation()"
           >
-            Activate
+            Details
           </button>
-          }
         </div>
       </div>
 
-      <div class="content" (click)="openDetailsDialog(agentMod)">
-        <span class="truncate">{{
-          agentMod.json?.modName || agentMod.folderName
-        }}</span>
+      <div class="content">
+        {{ agentMod.json?.modName || agentMod.folderName }}
       </div>
     </div>
+
     } @empty { Agente não possue mods. }
   </section>
   } @else {
-  <span>Nenhum agente selecionado.</span>
+  <div class="empty-wrapper">
+    <div class="empty-agent-state">
+      <div class="icon">
+        <i class="fa-solid fa-user-ninja"></i>
+      </div>
+
+      <h2>Choose an agent</h2>
+      <p>Select an agent on the left to manage its mods.</p>
+
+      <div class="hint">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Select one from the sidebar</span>
+      </div>
+    </div>
+  </div>
+
   }
 </main>

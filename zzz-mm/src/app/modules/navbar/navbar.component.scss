@@ -17,6 +17,9 @@
       user-select: none;
       position: relative;
 
+      border-radius: 14px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+
       .agent-name {
         display: none;
       }
@@ -26,14 +29,26 @@
         font-weight: bold;
         width: calc(20dvw - 8px);
 
+        border: 2px solid var(--main-color);
+        box-shadow: 0 0 0 2px rgba(var(--main-color-rgb), 0.25),
+          0 8px 24px rgba(0, 0, 0, 0.6);
+        transform: translateY(-2px);
+
         img {
-          border: 4px var(--main-color) solid;
+          // border: 4px var(--main-color) solid;
+          border-radius: 14px;
         }
       }
 
       &.grayscale {
         img {
-          filter: grayscale(100%);
+          // filter: grayscale(100%);
+          filter: grayscale(1);
+          opacity: 0.5;
+
+          &:hover {
+            opacity: 0.7;
+          }
         }
       }
     }
@@ -61,7 +76,14 @@
           font-size: 1.2rem;
           paint-order: stroke fill;
           word-break: keep-all;
+
+          opacity: 0;
+          transition: opacity 0.2s ease;
         }
+      }
+      .navbar-item:hover .agent-name,
+      .navbar-item.selected .agent-name {
+        opacity: 1;
       }
     }
   }

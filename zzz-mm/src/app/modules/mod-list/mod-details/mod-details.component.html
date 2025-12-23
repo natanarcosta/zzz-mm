@@ -27,19 +27,30 @@
           mat-button
           mat-flat-button
           (click)="handleGetModDataFromGBanana()"
+          [disabled]="isGettingGBananaData()"
         >
+          @if(isGettingGBananaData()) {
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          } @else {
           <i class="fa-solid fa-cloud-arrow-down"></i>
-          Fetch meta-data
+
+          } Fetch meta-data
         </button>
         @if(hasGbananaImage()) {
         <button
           mat-flat-button
           color="primary"
           (click)="handleSaveModDetails()"
+          [disabled]="isRefreshing()"
         >
           Save Image
         </button>
-        <button mat-flat-button color="primary" (click)="handleSaveMetadata()">
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="handleSaveMetadata()"
+          [disabled]="isRefreshing()"
+        >
           Save Metadata
         </button>
 
