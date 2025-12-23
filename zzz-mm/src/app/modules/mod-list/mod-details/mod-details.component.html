@@ -1,112 +1,137 @@
-<main id="mod-details">
-  @if(mod()) {
+<main id="mod-details" *ngIf="mod() as mod">
+  <!-- IMAGE -->
   <div class="image">
-    <img [src]="imageUrl()" loading="lazy" decoding="async" />
+    <img
+      [src]="imageUrl()"
+      loading="lazy"
+      decoding="async"
+      [ngClass]="{ censor: blur() }"
+    />
   </div>
-  <section class="details">
-    <div>
-      <h1>{{ mod()?.json?.modName || mod()?.folderName }}</h1>
 
-      @if (hasUpdate()) {
-      <div>
-        There is a new version avaialable! Last update:
-        {{ availableUpdate() | date : "mediumDate" }}
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="handleUpdateExistindMod()"
-        >
-          Update
-        </button>
+  <!-- CONTENT -->
+  <section class="content">
+    <!-- HEADER -->
+    <header class="header">
+      <h1>{{ mod.json?.modName || mod.folderName }}</h1>
+
+      <span
+        class="status"
+        [class.active]="mod?.json?.active"
+        [class.inactive]="!mod?.json?.active"
+      >
+        {{ mod.json?.active ? "Active" : "Inactive" }}
+      </span>
+    </header>
+
+    <!--  UPDATE  -->
+    <section class="update-banner" *ngIf="hasUpdate()">
+      <div class="info">
+        <i class="fa-solid fa-arrow-rotate-right"></i>
+        <span>
+          New version available
+          <small>
+            Last update:
+            {{ availableUpdate() | date : "mediumDate" }}
+          </small>
+        </span>
       </div>
 
-      } @if(hasGameBananaUrl()) {
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="handleUpdateExistindMod()"
+      >
+        Update
+      </button>
+    </section>
 
-      <div class="metadata-actions">
-        <button
-          mat-button
-          mat-flat-button
-          (click)="handleGetModDataFromGBanana()"
-          [disabled]="isGettingGBananaData()"
-        >
-          @if(isGettingGBananaData()) {
-          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          } @else {
-          <i class="fa-solid fa-cloud-arrow-down"></i>
+    <!-- TOOLBOX -->
+    <section class="toolbox" *ngIf="hasGameBananaUrl()">
+      <button mat-flat-button (click)="handleGetModDataFromGBanana()">
+        <i class="fa-solid fa-cloud-arrow-down"></i>
+        Sync from GameBanana
+      </button>
 
-          } Fetch meta-data
-        </button>
-        @if(hasGbananaImage()) {
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="handleSaveModDetails()"
-          [disabled]="isRefreshing()"
-        >
-          Save Image
-        </button>
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="handleSaveMetadata()"
-          [disabled]="isRefreshing()"
-        >
-          Save Metadata
-        </button>
+      <button
+        mat-stroked-button
+        *ngIf="hasGbananaImage()"
+        (click)="handleSaveModDetails()"
+      >
+        <i class="fa-solid fa-image"></i>
+        Save Image
+      </button>
 
-        }
+      <button
+        mat-stroked-button
+        *ngIf="hasGbananaImage()"
+        (click)="handleSaveMetadata()"
+      >
+        <i class="fa-solid fa-list"></i>
+        Save Metadata
+      </button>
+    </section>
+
+    <!-- META -->
+    <section class="meta-grid" *ngIf="!editMode() && mod.json">
+      <div class="item">
+        <i class="fa-solid fa-user"></i>
+        <span>Character</span>
+        <strong>{{ mod.json.character | agentName }}</strong>
       </div>
 
-      }
-    </div>
-
-    @if(!editMode()) {
-    <div>
-      <i class="fa-solid fa-user"></i>Character: {{ mod()?.json?.character }}
-    </div>
-    <div>
-      <i class="fa-solid fa-align-left"></i>Description:
-      {{ mod()?.json?.description || "None" }}
-    </div>
-    <div>
-      <i class="fa-solid fa-check"></i>Active:
-      {{ mod()?.json?.active ? "Yes" : "No" }}
-    </div>
-    <div>
-      <i class="fa-regular fa-calendar"></i> Installed:
-      {{ (mod()?.json?.localInstalledAt | date : "mediumDate") || "N/A" }}
-    </div>
-    <div>
-      <i class="fa-regular fa-calendar"></i> Last local Updated:
-      {{ (mod()?.json?.localUpdatedAt | date : "mediumDate") || "N/A" }}
-    </div>
-
-    <div>
-      <i class="fa-regular fa-calendar"></i> Last Gamebanana update:
-      {{ (mod()?.json?.remoteUpdatedAt | date : "mediumDate") || "N/A" }}
-    </div>
-
-    <div>
-      <i class="fa-solid fa-link"></i> URL:{{ mod()?.json?.url }}
-      <i
-        class="fa-solid fa-arrow-up-right-from-square"
-        (click)="handleOpenExternalUrl()"
-      ></i>
-    </div>
-    <div>
-      <i class="fa-regular fa-keyboard"></i> Hotkeys:
-      <div class="keys">
-        @for (key of mod()?.json?.hotkeys; track $index) {
-        <span>{{ key.description }}: {{ key.key }}</span>
-        } @empty { None }
+      <div class="item description">
+        <i class="fa-solid fa-align-left"></i>
+        <span>Description</span>
+        <strong class="clamp">
+          {{ mod.json.description || "None" }}
+        </strong>
       </div>
-    </div>
-    } @else {
-    <form [formGroup]="form">
+
+      <div class="item">
+        <i class="fa-regular fa-calendar"></i>
+        <span>Installed</span>
+        <strong>{{
+          (mod.json.localInstalledAt | date : "mediumDate") || "N/A"
+        }}</strong>
+      </div>
+
+      <div class="item">
+        <i class="fa-regular fa-calendar"></i>
+        <span>Last update</span>
+        <strong>{{
+          (mod.json.localUpdatedAt | date : "mediumDate") || "N/A"
+        }}</strong>
+      </div>
+
+      <div class="item full">
+        <i class="fa-solid fa-link"></i>
+        <span>URL</span>
+        <strong class="link" (click)="handleOpenExternalUrl()">
+          {{ mod.json.url }}
+        </strong>
+      </div>
+
+      <div class="item full">
+        <i class="fa-regular fa-keyboard"></i>
+        <span>Hotkeys</span>
+        <div class="keys">
+          @for (key of mod.json.hotkeys; track $index) {
+          <span>{{ key.description }}: {{ key.key }}</span>
+          } @empty {
+          <span class="empty">None</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- EDIT MODE -->
+    <form [formGroup]="form" *ngIf="editMode()" class="edit-form">
       <mat-form-field>
         <mat-label>Mod Name</mat-label>
-        <input type="text" matInput formControlName="modName" />
+        <input matInput formControlName="modName" />
       </mat-form-field>
+
       <mat-form-field appearance="fill">
         <mat-label>Character</mat-label>
         <input
@@ -122,43 +147,53 @@
           }
         </mat-autocomplete>
       </mat-form-field>
+
       <mat-form-field>
         <mat-label>Description</mat-label>
-        <input type="text" matInput formControlName="description" />
+        <input matInput formControlName="description" />
       </mat-form-field>
+
       <mat-form-field>
-        <mat-label>Url</mat-label>
-        <input type="text" matInput formControlName="url" />
+        <mat-label>URL</mat-label>
+        <input matInput formControlName="url" />
       </mat-form-field>
     </form>
-    }
   </section>
-  }
-  <section class="actions">
-    @if(!editMode()){ @if(mod()?.json?.active){
-    <button mat-flat-button color="warn" (click)="handleRemoveMod()" mat-button>
-      Disable
-    </button>
-    } @else {
-    <button mat-flat-button color="primary" (click)="handleActivateMod()">
-      Activate
-    </button>
-    }
-    <button mat-stroked-button color="secondary" (click)="toggleEditMode()">
-      Edit
-    </button>
-    } @else {
 
-    <button mat-flat-button color="primary" (click)="handleSaveEdit()">
+  <!-- ACTIONS -->
+  <footer class="actions">
+    <button
+      mat-flat-button
+      [color]="mod.json?.active ? 'warn' : 'primary'"
+      (click)="mod.json?.active ? handleRemoveMod() : handleActivateMod()"
+      *ngIf="!editMode()"
+    >
+      <i
+        class="fa-solid fa-ban"
+        [ngClass]="{
+          'fa-ban': mod.json?.active,
+          'fa-check': !mod.json?.active
+        }"
+      ></i>
+      {{ mod.json?.active ? "Disable" : "Activate" }}
+    </button>
+
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="handleSaveEdit()"
+      *ngIf="editMode()"
+    >
+      <i class="fa-solid fa-floppy-disk"></i>
       Save
     </button>
-    <button mat-stroked-button color="primary" (click)="toggleEditMode()">
-      Cancel
-    </button>
-    }
 
-    <button mat-stroked-button color="secondary" (click)="closeDialog()">
-      Close
+    <button mat-stroked-button (click)="toggleEditMode()">
+      {{ editMode() ? "Cancel" : "Edit" }}
     </button>
-  </section>
+
+    <button mat-stroked-button (click)="closeDialog()">
+      <i class="fa-solid fa-xmark"></i> Close
+    </button>
+  </footer>
 </main>

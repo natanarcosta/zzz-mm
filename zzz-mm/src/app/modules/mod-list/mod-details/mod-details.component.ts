@@ -38,6 +38,7 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { finalize, map, Observable, startWith, Subject, takeUntil } from 'rxjs';
 import { AddModComponent } from '../../add-mod/add-mod.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { AgentNamePipe } from '../../../shared/agent-name.pipe';
 
 @Component({
   selector: 'app-mod-details',
@@ -55,6 +56,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatFormFieldModule,
     MatAutocompleteModule,
     MatProgressBarModule,
+    AgentNamePipe,
   ],
 })
 export class ModDetailsComponent implements OnInit, OnDestroy {
@@ -86,6 +88,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   public availableUpdate = signal<Date | null>(null);
   public isRefreshing = signal(false);
   public isGettingGBananaData = signal(false);
+  public blur = signal<boolean>(false);
 
   public hasGameBananaUrl = computed(() => {
     const url = this.mod()?.json?.url;
@@ -100,11 +103,18 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._configService.configReady.subscribe({
+      next: (config) => {
+        this.blur.set(config.blur);
+      },
+    });
+
     this.mod.set(this._data.mod);
 
     this._mainService.agents$.pipe(takeUntil(this._onDestroy$)).subscribe({
       next: (agents) => (this.agents = agents),
     });
+
     this._mainService.agentSelected
       .pipe(takeUntil(this._onDestroy$))
       .subscribe({
