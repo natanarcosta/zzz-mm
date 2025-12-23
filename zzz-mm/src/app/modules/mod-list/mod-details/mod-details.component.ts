@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
+  MatDialog,
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
@@ -35,6 +36,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { map, Observable, startWith, Subject, takeUntil } from 'rxjs';
+import { AddModComponent } from '../../add-mod/add-mod.component';
 
 @Component({
   selector: 'app-mod-details',
@@ -64,6 +66,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   private _modManagerService = inject(ModManagerService);
   private _data: { mod: AgentMod } = inject(MAT_DIALOG_DATA);
   private _onDestroy$ = new Subject<void>();
+  private _dialog = inject(MatDialog);
 
   public mod = signal<AgentMod | null>(null);
   public hasGbananaImage = signal<boolean>(false);
@@ -291,5 +294,15 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     if (!mod) return;
 
     this._modManagerService.handleRemoveMod(mod);
+  }
+
+  public handleUpdateExistindMod() {
+    this._dialog.open(AddModComponent, {
+      width: '40vw',
+      data: {
+        mode: 'update',
+        targetMod: this.mod(),
+      },
+    });
   }
 }

@@ -20,6 +20,11 @@ export interface ElectronAPI {
   installMod(data: unknown): void;
   getFilePath(file: File): string;
   selectDirectory(options?: any): Promise<string>;
+  extractModForUpdate(
+    zipPath: string,
+    targetFolder: string,
+    baseModsDir: string
+  ): Promise<{ success: boolean; error?: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -45,5 +50,18 @@ export class ElectronBridgeService {
 
   get isElectron(): boolean {
     return !!this._api();
+  }
+
+  extractModForUpdate(
+    zipPath: string,
+    targetFolder: string,
+    baseModsDir: string
+  ): Promise<{ success: boolean; error?: string }> {
+    console.log('extractModForUpdate com: ');
+    console.log(zipPath, targetFolder, baseModsDir);
+    return (
+      this.api?.extractModForUpdate(zipPath, targetFolder, baseModsDir) ??
+      Promise.resolve({ success: false, error: 'Bridge API unavailable' })
+    );
   }
 }

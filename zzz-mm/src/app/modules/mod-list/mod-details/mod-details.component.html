@@ -11,6 +11,13 @@
       <div>
         There is a new version avaialable! Last update:
         {{ availableUpdate() | date : "mediumDate" }}
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="handleUpdateExistindMod()"
+        >
+          Update
+        </button>
       </div>
 
       } @if(hasGameBananaUrl()) {

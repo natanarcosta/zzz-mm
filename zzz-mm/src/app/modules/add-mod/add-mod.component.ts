@@ -24,8 +24,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MainService } from '../../services/main.service';
-import { ZZZAgent } from '../../models/agent.model';
+import { AgentMod, ZZZAgent } from '../../models/agent.model';
 import { map, Observable, startWith } from 'rxjs';
+import { AddModMode } from '../../models/types.model';
+import { join } from 'node:path';
 
 @Component({
   selector: 'app-add-mod',
@@ -53,7 +55,11 @@ export class AddModComponent implements OnInit {
   private _electronBridge = inject(ElectronBridgeService);
   private _dialogRef = inject(MatDialogRef<AddModComponent>);
   private _mainService = inject(MainService);
-  private _data: { selectedAgent: ZZZAgent } = inject(MAT_DIALOG_DATA);
+  public data: {
+    selectedAgent?: ZZZAgent;
+    mode: AddModMode;
+    targetMod?: AgentMod;
+  } = inject(MAT_DIALOG_DATA);
   private _config!: AppConfigs;
 
   public filteredAgents$!: Observable<ZZZAgent[]>;
@@ -86,7 +92,9 @@ export class AddModComponent implements OnInit {
       next: (agents) => (this.agents = agents),
     });
 
-    this.form.controls.character.setValue(this._data.selectedAgent);
+    if (this.data.mode === 'install' && this.data.selectedAgent) {
+      this.form.controls.character.setValue(this.data.selectedAgent);
+    }
 
     this.filteredAgents$ = this.form.controls.character.valueChanges.pipe(
       startWith(''),
@@ -136,30 +144,63 @@ export class AddModComponent implements OnInit {
   }
 
   async confirm() {
-    if (!this.form.valid || !this.file || !this.filePath) return;
+    if (!this.file || !this.filePath) return;
+    if (this.data.mode === 'install' && !this.form.valid) return;
     if (!this.electronAPI) return;
 
     const now = new Date().toISOString();
 
-    const payload = {
-      archivePath: this.filePath,
-      destinationPath: this._config.source_mods_folder,
-      modData: {
-        ...this.form.value,
-        modName: this.form.controls.name.value,
-        character: (this.form.controls.character.value as any).name,
-        localInstalledAt: now,
-        localUpdatedAt: now,
-      },
-    };
+    switch (this.data.mode) {
+      case 'install': {
+        const payload = {
+          archivePath: this.filePath,
+          destinationPath: this._config.source_mods_folder,
+          modData: {
+            ...this.form.value,
+            modName: this.form.controls.name.value,
+            character: (this.form.controls.character.value as any).name,
+            localInstalledAt: now,
+            localUpdatedAt: now,
+          },
+        };
+        console.log('Install com ');
+        console.log(payload);
+        this.electronAPI.installMod(payload);
+        this._notify.success('Mod instalado com sucesso');
+        this._dialogRef.close(true);
+        break;
+      }
+      case 'update': {
+        const mod = this.data.targetMod;
+        if (!mod) return;
+        const json = this.data.targetMod?.json;
+        if (!json) return;
 
-    try {
-      this.electronAPI.installMod(payload);
-      this._notify.success('Mod instalado com sucesso');
-      this._dialogRef.close(true);
-    } catch (err) {
-      this._notify.error('Erro ao instalar o mod. ' + JSON.stringify(err));
-      console.error(err);
+        const payload = {
+          archivePath: this.filePath,
+          destinationPath: this._config.source_mods_folder,
+          modData: {
+            ...json,
+            localUpdatedAt: now,
+          },
+        };
+
+        this._electronBridge
+          .extractModForUpdate(
+            payload.archivePath,
+            mod.folderName,
+            this._config.source_mods_folder
+          )
+          .then((result) => {
+            if (result.success) {
+              this._notify.success('Mod atualizado com sucesso');
+            } else {
+              this._notify.error('Falha no update: ' + result.error);
+            }
+          });
+
+        break;
+      }
     }
   }
 }

@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   installMod: (data) => ipcRenderer.invoke("install-mod", data),
   getFilePath: (file) => webUtils.getPathForFile(file),
   selectDirectory: (options) => ipcRenderer.invoke("select-directory", options),
+  extractModForUpdate: (zipPath, targetFolder, baseModsDir) =>
+    ipcRenderer.invoke("extract-mod-update", { zipPath, targetFolder }),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

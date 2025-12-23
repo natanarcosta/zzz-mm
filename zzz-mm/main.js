@@ -214,7 +214,11 @@ function createWindow() {
     : path.join(process.resourcesPath, "unrar", "unrar.exe");
 
   async function extractRar(rarPath, dest) {
-    await unrar(rarPath, dest, { unrarPath });
+    if (unrarPath) {
+      await unrar(rarPath, dest, { unrarPath });
+    } else {
+      await unrar(rarPath, dest); // DEV → usa unrar do sistema
+    }
   }
 
   function getRootFolder(tempDir) {
@@ -313,6 +317,53 @@ function createWindow() {
       return result.filePaths[0]; // Return the first selected path
     }
   });
+
+  ipcMain.handle(
+    "extract-mod-update",
+    async (event, { zipPath, targetFolder, baseModsDir }) => {
+      try {
+        const targetPath = path.join(baseModsDir, targetFolder);
+
+        // 1) preparar temp
+        const tempDir = path.join(baseModsDir, "__temp_update__" + Date.now());
+        fs.mkdirSync(tempDir, { recursive: true });
+
+        // 2) extrair ZIP para temp
+        const ext = path.extname(zipPath).toLowerCase();
+        if (ext === ".zip") {
+          await extractZip(zipPath, tempDir);
+        } else if (ext === ".rar") {
+          await extractRar(zipPath, tempDir);
+        } else {
+          throw new Error("Formato não suportado");
+        }
+
+        // 3) validação mínima
+        if (!fs.existsSync(path.join(tempDir, "mod.json"))) {
+          throw new Error("Estrutura inválida");
+        }
+
+        // 4) apagar conteúdo antigo
+        const files = fs.readdir(targetPath);
+        for (const file of files) {
+          await fs.remove(path.join(targetPath, file));
+        }
+
+        // 5) mover extraído pra pasta original
+        const newFiles = fs.readdir(tempDir);
+        for (const file of newFiles) {
+          await fs.move(path.join(tempDir, file), path.join(targetPath, file));
+        }
+
+        // 6) apagar temp
+        fs.rmSync(tempDir, { recursive: true, force: true });
+
+        return { success: true };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    }
+  );
 }
 app.on("ready", createWindow);
 app.on("window-all-closed", function () {

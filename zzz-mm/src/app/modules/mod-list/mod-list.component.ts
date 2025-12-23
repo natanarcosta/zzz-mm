@@ -100,6 +100,7 @@ export class ModListComponent implements OnInit, OnDestroy {
       width: '40vw',
       data: {
         selectedAgent: this.selectedAgent(),
+        mode: 'install',
       },
     });
   }
