@@ -139,6 +139,8 @@ export class AddModComponent implements OnInit {
     if (!this.form.valid || !this.file || !this.filePath) return;
     if (!this.electronAPI) return;
 
+    const now = new Date().toISOString();
+
     const payload = {
       archivePath: this.filePath,
       destinationPath: this._config.source_mods_folder,
@@ -146,6 +148,8 @@ export class AddModComponent implements OnInit {
         ...this.form.value,
         modName: this.form.controls.name.value,
         character: (this.form.controls.character.value as any).name,
+        localInstalledAt: now,
+        localUpdatedAt: now,
       },
     };
 

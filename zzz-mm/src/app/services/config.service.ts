@@ -5,6 +5,7 @@ import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
 import { BehaviorSubject, ReplaySubject, Subject } from 'rxjs';
 import { NotificationService } from './notifications.service';
 import { NavbarTypeEnum } from '../models/enums';
+import path from 'path';
 
 export interface AppConfigs {
   source_mods_folder: string;
@@ -106,64 +107,77 @@ export class ConfigService {
 
   async populateCharacterMods() {
     this.agents().forEach((agent) => (agent.mods = []));
+    console.log('Agents: ', this.agents().length);
+    console.log('Folders: ', this.folders().length);
 
     for (let folder of this.folders()) {
-      if (folder.endsWith('.txt')) continue;
+      try {
+        console.log(folder);
+        if (folder.endsWith('.txt')) continue;
 
-      const filePath =
-        this.config.source_mods_folder + '\\' + folder + '\\mod.json';
-      const folderPath = this.config.source_mods_folder + '\\' + folder;
-      const folderContent: string[] = await this.readDirectory(
-        folderPath,
-        false
-      );
+        const filePath =
+          this.config.source_mods_folder + '\\' + folder + '\\mod.json';
+        const folderPath = this.config.source_mods_folder + '\\' + folder;
+        const folderContent: string[] = await this.readDirectory(
+          folderPath,
+          false
+        );
 
-      const hasPreview = folderContent.find(
-        (content) => content === 'preview.jpg'
-      );
+        const hasPreview = folderContent.find(
+          (content) => content === 'preview.jpg'
+        );
 
-      const hasImage = folderContent.find(
-        (content) =>
-          content.endsWith('.png') ||
-          content.endsWith('.jpg') ||
-          content.endsWith('.jpeg')
-      );
+        const hasImage = folderContent.find(
+          (content) =>
+            content.endsWith('.png') ||
+            content.endsWith('.jpg') ||
+            content.endsWith('.jpeg')
+        );
 
-      const jsonContent = await this.readJsonFile(filePath);
-      if (!jsonContent) continue;
+        const jsonContent = await this.readJsonFile(filePath);
+        if (!jsonContent) continue;
 
-      const character = jsonContent.character
-        .toLowerCase()
-        .replaceAll(' ', '-');
+        const character = jsonContent.character
+          .toLowerCase()
+          .replaceAll(' ', '-');
 
-      const url = jsonContent.url;
-      const isGBananaId = url && url.includes('gamebanana');
+        const url = jsonContent.url;
+        const isGBananaId = url && url.includes('gamebanana');
 
-      const agent = this.agents().find((a) => a.name === character);
+        const agent = this.agents().find((a) => a.name === character);
 
-      if (agent) {
-        const agentMod: AgentMod = { folderName: folder };
-        if (isGBananaId)
-          agentMod.id = Number(url.split('/')[url.split('/').length - 1]);
+        if (agent) {
+          const agentMod: AgentMod = { folderName: folder };
+          if (isGBananaId)
+            agentMod.id = Number(url.split('/')[url.split('/').length - 1]);
 
-        let image: string | undefined = hasPreview;
-        if (!hasPreview) image = hasImage;
+          let image: string | undefined = hasPreview;
+          if (!hasPreview) image = hasImage;
 
-        const imagePath = image
-          ? this.config.source_mods_folder + '\\' + folder + '\\' + image
-          : 'src/assets/char-portraits/' + agent.id + '.png';
+          const imagePath = image
+            ? this.config.source_mods_folder + '\\' + folder + '\\' + image
+            : null;
 
-        const electronAPI = this.electronAPI;
-        if (!electronAPI) continue;
+          const electronAPI = this.electronAPI;
+          if (!electronAPI) continue;
 
-        const src = await electronAPI.loadImage(imagePath);
+          let src!: string;
 
-        agentMod.previewPath = src;
-        agentMod.json = jsonContent;
+          if (imagePath) {
+            src = await electronAPI.loadImage(imagePath);
+            agentMod.previewPath = src;
+          }
 
-        agent.mods?.push(agentMod);
-      } else {
-        console.log('Not found: ', jsonContent.character);
+          agentMod.json = jsonContent;
+
+          agent.mods?.push(agentMod);
+        } else {
+          console.error('Not found: ', jsonContent.character);
+          continue;
+        }
+      } catch (err) {
+        console.error('ERROR_POPULATE: ', err);
+        continue;
       }
     }
     this._notify.info('Loaded mods successfully');

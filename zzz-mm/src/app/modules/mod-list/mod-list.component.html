@@ -19,7 +19,10 @@
     >
       <div class="image">
         <img
-          [src]="agentMod.previewPath || ''"
+          [src]="
+            agentMod.previewPath ||
+            'assets/char-portraits/' + selectedAgent()!.id + '.png'
+          "
           (click)="openDetailsDialog(agentMod)"
         />
         <div>

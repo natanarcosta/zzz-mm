@@ -21,4 +21,9 @@ export interface ModJson {
   hotkeys: Array<{ description: string; key: string }>;
   active: boolean;
   updatedAt?: string;
+
+  localInstalledAt: string;
+  localUpdatedAt: string;
+
+  remoteUpdatedAt?: string;
 }

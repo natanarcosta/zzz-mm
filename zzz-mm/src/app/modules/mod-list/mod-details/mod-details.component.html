@@ -7,7 +7,13 @@
     <div>
       <h1>{{ mod()?.json?.modName || mod()?.folderName }}</h1>
 
-      @if(hasGameBananaUrl()) {
+      @if (hasUpdate()) {
+      <div>
+        There is a new version avaialable! Last update:
+        {{ availableUpdate() | date : "mediumDate" }}
+      </div>
+
+      } @if(hasGameBananaUrl()) {
 
       <div class="metadata-actions">
         <button
@@ -49,8 +55,17 @@
       {{ mod()?.json?.active ? "Yes" : "No" }}
     </div>
     <div>
-      <i class="fa-regular fa-calendar"></i> Last Update:
-      {{ (mod()?.json?.updatedAt | date : "mediumDate") || "N/A" }}
+      <i class="fa-regular fa-calendar"></i> Installed:
+      {{ (mod()?.json?.localInstalledAt | date : "mediumDate") || "N/A" }}
+    </div>
+    <div>
+      <i class="fa-regular fa-calendar"></i> Last local Updated:
+      {{ (mod()?.json?.localUpdatedAt | date : "mediumDate") || "N/A" }}
+    </div>
+
+    <div>
+      <i class="fa-regular fa-calendar"></i> Last Gamebanana update:
+      {{ (mod()?.json?.remoteUpdatedAt | date : "mediumDate") || "N/A" }}
     </div>
 
     <div>

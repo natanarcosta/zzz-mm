@@ -35,8 +35,16 @@ export class ModManagerService {
 
   handleSaveMetadata(mod: AgentMod) {
     const jsonPath = this.modFolderPath(mod) + '/mod.json';
-    this.electronAPI?.writeJsonFile(jsonPath, mod.json);
 
+    const now = new Date().toISOString();
+    const json = mod.json;
+    console.log(json);
+    if (!json) return;
+    json.localUpdatedAt = now;
+
+    console.log(json);
+
+    this.electronAPI?.writeJsonFile(jsonPath, json);
     this._mainService.updateAgentMod(mod);
     this._notify.success('Mod data saved successfully');
   }

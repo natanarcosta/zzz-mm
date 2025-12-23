@@ -5,6 +5,7 @@ import {
   Component,
   computed,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -33,7 +34,7 @@ import {
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { map, Observable, startWith } from 'rxjs';
+import { map, Observable, startWith, Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-mod-details',
@@ -52,7 +53,7 @@ import { map, Observable, startWith } from 'rxjs';
     MatAutocompleteModule,
   ],
 })
-export class ModDetailsComponent implements OnInit {
+export class ModDetailsComponent implements OnInit, OnDestroy {
   private _ref = inject(MatDialogRef<ModDetailsComponent>);
   private _electronBridge = inject(ElectronBridgeService);
   private _gBananaService = inject(GameBananaService);
@@ -62,6 +63,7 @@ export class ModDetailsComponent implements OnInit {
   private _notify = inject(NotificationService);
   private _modManagerService = inject(ModManagerService);
   private _data: { mod: AgentMod } = inject(MAT_DIALOG_DATA);
+  private _onDestroy$ = new Subject<void>();
 
   public mod = signal<AgentMod | null>(null);
   public hasGbananaImage = signal<boolean>(false);
@@ -75,29 +77,35 @@ export class ModDetailsComponent implements OnInit {
   public filteredAgents$!: Observable<ZZZAgent[]>;
   public agents!: ZZZAgent[];
   public selectedAgent!: ZZZAgent;
+  public hasUpdate = signal(false);
+  public availableUpdate = signal<Date | null>(null);
 
   public hasGameBananaUrl = computed(() => {
     const url = this.mod()?.json?.url;
     return !!url && url.startsWith('https://gamebanana');
   });
 
-  public imageUrl = computed(() => {
-    const path = this.mod()?.previewPath || '';
-    return path;
-  });
+  public imageUrl = computed(() => this.mod()?.previewPath ?? '');
+
+  ngOnDestroy(): void {
+    this._onDestroy$.next();
+    this._onDestroy$.complete();
+  }
 
   ngOnInit(): void {
     this.mod.set(this._data.mod);
 
-    this._mainService.agents$.subscribe({
+    this._mainService.agents$.pipe(takeUntil(this._onDestroy$)).subscribe({
       next: (agents) => (this.agents = agents),
     });
-    this._mainService.agentSelected.subscribe({
-      next: (data) => {
-        if (!data) return;
-        this.selectedAgent = data;
-      },
-    });
+    this._mainService.agentSelected
+      .pipe(takeUntil(this._onDestroy$))
+      .subscribe({
+        next: (data) => {
+          if (!data) return;
+          this.selectedAgent = data;
+        },
+      });
 
     this.filteredAgents$ = this.form.controls.character.valueChanges.pipe(
       startWith(''),
@@ -202,7 +210,23 @@ export class ModDetailsComponent implements OnInit {
     this._gBananaService.getModData(id).subscribe({
       next: (data) => {
         const mod = this.mod();
-        if (!mod || !mod.json) return;
+        if (!mod || !mod.json || !data.updated_at) return;
+
+        const remoteUpdatedAt = data.updated_at.toISOString();
+        const januaryFirst = 1735700400000;
+
+        const localUpdatedAt =
+          mod.json.localUpdatedAt ??
+          mod.json.localInstalledAt ??
+          new Date(0).toISOString();
+
+        if (
+          new Date(remoteUpdatedAt).getTime() >
+          new Date(localUpdatedAt).getTime()
+        ) {
+          this.hasUpdate.set(true);
+          this.availableUpdate.set(data.updated_at);
+        }
 
         this.mod.set({
           ...mod,
@@ -210,13 +234,15 @@ export class ModDetailsComponent implements OnInit {
           json: {
             ...mod.json,
             modName: data.name,
-            updatedAt: data.updated_at.toISOString(),
+            remoteUpdatedAt,
           },
         });
 
-        if (data.fullSizePreview) this.hasGbananaImage.set(true);
+        if (data.fullSizePreview) {
+          this.hasGbananaImage.set(true);
+        }
+
         this._notify.info('Gamebanana data loaded');
-        this._cdr.markForCheck();
       },
     });
   }
@@ -225,8 +251,9 @@ export class ModDetailsComponent implements OnInit {
     if (!this.hasGbananaImage()) return;
 
     const fileName = 'preview.jpg';
-    const previewPath = this.mod()!.previewPath;
+    const previewPath = this.mod()?.previewPath;
     if (!previewPath) return;
+
     const diskPath =
       this._configService.config.source_mods_folder +
       '\\' +
@@ -238,7 +265,13 @@ export class ModDetailsComponent implements OnInit {
 
   handleSaveMetadata() {
     const jsonPath = this.modFolderPath + '/mod.json';
-    this.electronAPI?.writeJsonFile(jsonPath, this.mod()?.json);
+    const json = this.mod()?.json;
+    if (!json) return;
+
+    const now = new Date().toISOString();
+    json.localUpdatedAt = now;
+
+    this.electronAPI?.writeJsonFile(jsonPath, json);
     const mod = this.mod();
     if (!mod) return;
 

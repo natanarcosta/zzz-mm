@@ -36,7 +36,9 @@ function createWindow() {
         slashes: true,
       })
     );
-    mainWindow.setMenu(null);
+
+    mainWindow.webContents.openDevTools();
+    // mainWindow.setMenu(null);
   }
 
   mainWindow.on("closed", function () {
@@ -64,8 +66,13 @@ function createWindow() {
   });
 
   ipcMain.handle("load-image", async (_, filePath) => {
-    const buffer = fs.readFileSync(filePath);
-    return `data:image/png;base64,${buffer.toString("base64")}`;
+    try {
+      const buffer = fs.readFileSync(filePath);
+      return `data:image/png;base64,${buffer.toString("base64")}`;
+    } catch (err) {
+      console.error("LOAD_IMAGE_ERROR: ", err);
+      throw err;
+    }
   });
 
   ipcMain.handle("open-external-url", async (_, url) => {
