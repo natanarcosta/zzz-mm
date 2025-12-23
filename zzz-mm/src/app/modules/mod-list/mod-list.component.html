@@ -1,13 +1,40 @@
 <main id="mod-list" [ngClass]="{ 'min-h': !selectedAgent() }">
   <section class="header">
-    <i class="fa-solid fa-rotate-right" (click)="handleRefreshMods()"></i>
-    <i class="fa-solid fa-circle-plus" (click)="handleAddNewMod()"></i>
+    <i
+      class="fa-solid fa-shuffle"
+      (click)="pickRandomMod()"
+      matTooltip="Enable Random Mod"
+      *ngIf="enableShuffleMod()"
+    ></i>
+    <i
+      class="fa-solid fa-rotate-right"
+      (click)="handleRefreshMods()"
+      matTooltip="Refresh Mods"
+    ></i>
+    <i
+      class="fa-solid fa-circle-plus"
+      (click)="handleAddNewMod()"
+      matTooltip="Add New Mod"
+    ></i>
 
     @if(blur()) {
-    <i class="fa-solid fa-eye-low-vision" (click)="toggleBlur()"></i> } @else {
-    <i class="fa-solid fa-eye" (click)="toggleBlur()"></i>
+    <i
+      class="fa-solid fa-eye-low-vision"
+      (click)="toggleBlur()"
+      matTooltip="Disable Blur "
+    ></i>
+    } @else {
+    <i
+      class="fa-solid fa-eye"
+      (click)="toggleBlur()"
+      matTooltip="Enable Blur"
+    ></i>
     }
-    <i class="fa-solid fa-gear" (click)="openConfigDialog()"></i>
+    <i
+      class="fa-solid fa-gear"
+      (click)="openConfigDialog()"
+      matTooltip="Mod Manager Config"
+    ></i>
   </section>
   @if(selectedAgent()) {
   <h1>

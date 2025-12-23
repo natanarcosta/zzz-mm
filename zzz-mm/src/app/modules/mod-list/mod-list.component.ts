@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   inject,
   OnDestroy,
   OnInit,
@@ -9,12 +10,13 @@ import {
 import { AgentMod, ZZZAgent } from '../../models/agent.model';
 import { CommonModule } from '@angular/common';
 import { MainService } from '../../services/main.service';
-import { Subject, takeUntil } from 'rxjs';
+import { elementAt, Subject, takeUntil } from 'rxjs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ModDetailsComponent } from './mod-details/mod-details.component';
 import { ConfigService } from '../../services/config.service';
 import { ConfigDialogComponent } from '../config-dialog/config-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ModManagerService } from '../../services/mod-manager.service';
 import { AddModComponent } from '../add-mod/add-mod.component';
 import { AgentNamePipe } from '../../shared/agent-name.pipe';
@@ -24,7 +26,13 @@ import { AgentNamePipe } from '../../shared/agent-name.pipe';
   templateUrl: './mod-list.component.html',
   styleUrl: './mod-list.component.scss',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, AgentNamePipe],
+  imports: [
+    CommonModule,
+    MatDialogModule,
+    MatButtonModule,
+    AgentNamePipe,
+    MatTooltipModule,
+  ],
 })
 export class ModListComponent implements OnInit, OnDestroy {
   private _mainService = inject(MainService);
@@ -35,6 +43,14 @@ export class ModListComponent implements OnInit, OnDestroy {
   private _modManagerService = inject(ModManagerService);
 
   public selectedAgent = signal<ZZZAgent | null>(null);
+  public enableShuffleMod = computed(() => {
+    const selectedAgent = this.selectedAgent();
+    if (!selectedAgent) return false;
+    const mods = selectedAgent.mods;
+    if (!mods?.length) return false;
+
+    return mods.length > 1;
+  });
   public blur = signal<boolean>(false);
 
   ngOnDestroy(): void {
@@ -87,12 +103,12 @@ export class ModListComponent implements OnInit, OnDestroy {
     });
   }
 
-  public handleActivateMod(mod: AgentMod) {
-    this._modManagerService.handleActivateMod(mod);
+  public async handleActivateMod(mod: AgentMod) {
+    await this._modManagerService.handleActivateMod(mod);
   }
 
-  public handleDisableMod(mod: AgentMod) {
-    this._modManagerService.handleRemoveMod(mod);
+  public async handleDisableMod(mod: AgentMod) {
+    await this._modManagerService.handleRemoveMod(mod);
   }
 
   public handleAddNewMod() {
@@ -121,6 +137,23 @@ export class ModListComponent implements OnInit, OnDestroy {
       this.handleDisableMod(mod);
     } else {
       this.handleActivateMod(mod);
+    }
+  }
+
+  public async pickRandomMod(): Promise<void> {
+    const agentMods = this.selectedAgent()?.mods;
+    if (!agentMods?.length) return;
+
+    const randomIndex = Math.floor(Math.random() * agentMods.length);
+    const randomMod = agentMods[randomIndex];
+    if (randomMod.json?.active) return;
+    //Enable random mod
+    await this.handleActivateMod(randomMod);
+    const toRemove = agentMods.filter((mod, i) => i !== randomIndex);
+    //Disable all other mods
+    for (const mod of toRemove) {
+      if (!mod) continue;
+      await this.handleDisableMod(mod);
     }
   }
 }

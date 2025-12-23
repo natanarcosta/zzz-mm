@@ -311,18 +311,18 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     this._notify.success('Mod data saved successfully');
   }
 
-  handleActivateMod() {
+  async handleActivateMod() {
     const mod = this.mod();
     if (!mod) return;
 
-    this._modManagerService.handleActivateMod(mod);
+    await this._modManagerService.handleActivateMod(mod);
   }
 
-  handleRemoveMod() {
+  async handleRemoveMod() {
     const mod = this.mod();
     if (!mod) return;
 
-    this._modManagerService.handleRemoveMod(mod);
+    await this._modManagerService.handleRemoveMod(mod);
   }
 
   public handleUpdateExistindMod() {

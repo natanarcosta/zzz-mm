@@ -41,13 +41,12 @@ export class ModManagerService {
     if (!json) return;
     json.localUpdatedAt = now;
 
-
     this.electronAPI?.writeJsonFile(jsonPath, json);
     this._mainService.updateAgentMod(mod);
     this._notify.success('Mod data saved successfully');
   }
 
-  handleActivateMod(mod: AgentMod) {
+  async handleActivateMod(mod: AgentMod) {
     const json = mod.json;
     if (!json) return;
 
@@ -60,7 +59,7 @@ export class ModManagerService {
     const target =
       this._configService.config.mod_links_folder + '\\' + mod.folderName;
 
-    this._createModLink(source, target);
+    return this._createModLink(source, target);
   }
 
   private async _createModLink(sourceFolder: string, modsFolder: string) {
@@ -78,7 +77,7 @@ export class ModManagerService {
     }
   }
 
-  handleRemoveMod(mod: AgentMod) {
+  async handleRemoveMod(mod: AgentMod) {
     if (!mod) return;
 
     const json = mod.json;
@@ -90,7 +89,7 @@ export class ModManagerService {
     const target =
       this._configService.config.mod_links_folder + '\\' + mod.folderName;
 
-    this._removeModLink(target);
+    return this._removeModLink(target);
   }
 
   private async _removeModLink(linkPath: string) {
