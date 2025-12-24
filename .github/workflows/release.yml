@@ -2,8 +2,8 @@ name: Build and Release ZZZ Mod Manager
 
 on:
   push:
-    tags:
-      - "v*.*.*" # Ex: v0.1.0
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -27,15 +27,36 @@ jobs:
           cache: npm
           cache-dependency-path: zzz-mm/package-lock.json
 
+      - name: Cache Angular
+        uses: actions/cache@v4
+        with:
+          path: zzz-mm/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('zzz-mm/package-lock.json') }}
+          restore-keys: |
+            angular-${{ runner.os }}-
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build Electron app
         run: npm run electron:dist
 
-      - name: Upload release assets
+      - name: Read version
+        id: version
+        run: |
+          echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        run: |
+          git tag v${{ steps.version.outputs.version }}
+          git push origin v${{ steps.version.outputs.version }}
+
+      - name: Create GitHub Release (draft)
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: ZZZ Mod Manager v${{ steps.version.outputs.version }}
+          draft: true
           files: |
             zzz-mm/dist/*.exe
             zzz-mm/dist/*.blockmap
