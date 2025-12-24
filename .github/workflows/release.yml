@@ -1,15 +1,15 @@
-name: Build and Ava's Release ZZZ Mod Manager
+name: Build and Release ZZZ Mod Manager
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: windows-latest
 
     defaults:
@@ -17,8 +17,7 @@ jobs:
         working-directory: zzz-mm
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,21 +40,9 @@ jobs:
       - name: Build Electron app
         run: npm run electron:dist
 
-      - name: Read version
-        id: version
-        run: |
-          echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
-
-      - name: Create Git tag
-        run: |
-          git tag v${{ steps.version.outputs.version }}
-          git push origin v${{ steps.version.outputs.version }}
-
       - name: Create GitHub Release (draft)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: ZZZ Mod Manager v${{ steps.version.outputs.version }}
           draft: true
           files: |
             zzz-mm/dist/*.exe
