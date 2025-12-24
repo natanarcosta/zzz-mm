@@ -143,6 +143,7 @@ function createWindow() {
         navbar_type: "list",
         auto_fetch: false,
         disable_others: true,
+        user_ini_path: "",
       };
 
       fs.writeFileSync(
@@ -380,7 +381,7 @@ function createWindow() {
 
       moveFolderContents(contentRoot, finalPath);
 
-      myConsole.log('Mod Data no install-mod: ');
+      myConsole.log("Mod Data no install-mod: ");
       myConsole.log(modData);
 
       // DOWNLOAD PREVIEW IMAGE (optional)
@@ -480,17 +481,16 @@ function createWindow() {
         }
 
         // 2) detectar raiz real do update
-        // const root = getRootFolder(tempDir);
         const root = unwrapSingleFolder(tempDir);
 
-        const updateEntries = fs.readdirSync(root.path);
+        const updateEntries = fs.readdirSync(root);
         if (updateEntries.length === 0) {
           throw new Error("Pacote de update vazio");
         }
 
         // 3) copiar arquivos do update (merge)
         for (const file of updateEntries) {
-          const src = path.join(root.path, file);
+          const src = path.join(root, file);
           const dest = path.join(targetPath, file);
 
           fs.cpSync(src, dest, {
@@ -501,7 +501,7 @@ function createWindow() {
 
         // 4) copiar novos arquivos
         for (const file of updateEntries) {
-          fs.cpSync(path.join(root.path, file), path.join(targetPath, file), {
+          fs.cpSync(path.join(root, file), path.join(targetPath, file), {
             recursive: true,
           });
         }
@@ -672,6 +672,150 @@ function createWindow() {
       return { success: false, error: err.message };
     }
   });
+
+  ipcMain.handle(
+    "sync-mod-ini-from-d3dx",
+    async (_, { modFolderName, d3dxUserIniPath, modsRoot }) => {
+      try {
+        // =========================
+        // VALIDATIONS
+        // =========================
+        if (!modFolderName || !d3dxUserIniPath || !modsRoot) {
+          return { success: false, error: "Invalid payload" };
+        }
+
+        if (!fs.existsSync(d3dxUserIniPath)) {
+          return { success: false, error: "d3dx_user.ini not found" };
+        }
+
+        if (!fs.existsSync(modsRoot)) {
+          return { success: false, error: "Mods root folder not found" };
+        }
+
+        // =========================
+        // READ d3dx_user.ini
+        // =========================
+        const d3dxContent = fs.readFileSync(d3dxUserIniPath, "utf-8");
+        const lines = d3dxContent.split(/\r?\n/);
+
+        /**
+         * Structure:
+         * {
+         *   "relative/path/to/file.ini": {
+         *     variable: value
+         *   }
+         * }
+         */
+        const iniMap = {};
+
+        // Regex:
+        // $\mods\<modFolder>\<path>\<file>.ini\<variable> = <value>
+        const regex =
+          /^\$\\mods\\([^\\]+)\\(.+?\.ini)\\([a-zA-Z0-9_]+)\s*=\s*(.+)$/;
+
+        for (const line of lines) {
+          const match = line.match(regex);
+          if (!match) continue;
+
+          const folder = match[1].trim();
+          const relativeIniPath = match[2];
+          const variable = match[3];
+          const value = match[4];
+
+          // Only target the selected mod folder
+          if (folder.toLowerCase() !== modFolderName.toLowerCase()) continue;
+
+          if (!iniMap[relativeIniPath]) {
+            iniMap[relativeIniPath] = {};
+          }
+
+          iniMap[relativeIniPath][variable] = value;
+        }
+
+        const iniFiles = Object.keys(iniMap);
+        if (iniFiles.length === 0) {
+          return {
+            success: false,
+            error: "No matching entries found in d3dx_user.ini",
+          };
+        }
+
+        // =========================
+        // APPLY TO EACH mod.ini
+        // =========================
+        for (const relativeIniPath of iniFiles) {
+          const absoluteIniPath = path.join(
+            modsRoot,
+            modFolderName,
+            relativeIniPath
+          );
+
+          if (!fs.existsSync(absoluteIniPath)) {
+            // Skip silently — mod might have optional ini
+            continue;
+          }
+
+          // Backup
+          const backupPath = absoluteIniPath + `.bak-${Date.now().toString()}`;
+          fs.copyFileSync(absoluteIniPath, backupPath);
+
+          const originalContent = fs.readFileSync(absoluteIniPath, "utf-8");
+          const iniLines = originalContent.split(/\r?\n/);
+
+          const valuesToApply = iniMap[relativeIniPath];
+          let modified = false;
+
+          let inConstantsSection = false;
+
+          const updatedLines = iniLines.map((line) => {
+            const trimmed = line.trim();
+
+            // Detect section headers
+            const sectionMatch = trimmed.match(/^\[(.+?)\]$/);
+            if (sectionMatch) {
+              inConstantsSection =
+                sectionMatch[1].toLowerCase() === "constants";
+              return line;
+            }
+
+            if (!inConstantsSection) {
+              return line;
+            }
+
+            // Match ONLY constant declarations
+            const varMatch = line.match(
+              /^\s*(global\s+persist\s+|global\s+)?\$(\w+)\s*=\s*(.+)$/
+            );
+
+            if (!varMatch) return line;
+
+            const varName = varMatch[2];
+
+            if (valuesToApply.hasOwnProperty(varName)) {
+              modified = true;
+
+              const prefix = varMatch[1] ?? "";
+              return `${prefix}$${varName} = ${valuesToApply[varName]}`;
+            }
+
+            return line;
+          });
+
+          if (modified) {
+            fs.writeFileSync(absoluteIniPath, updatedLines.join("\n"), "utf-8");
+          }
+        }
+
+        return { success: true };
+      } catch (err) {
+        console.error("SYNC MOD INI ERROR:", err);
+        return {
+          success: false,
+          error: err.message || "Unknown error",
+        };
+      }
+    }
+  );
 }
 app.on("ready", createWindow);
 app.on("window-all-closed", function () {

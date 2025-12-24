@@ -202,6 +202,20 @@
         <i class="fa-regular fa-pen-to-square"></i>
         {{ editMode() ? "Cancel edit" : "Edit details" }}
       </button>
+
+      <button
+        mat-stroked-button
+        (click)="handleSyncIniVariables()"
+        *ngIf="mod.json?.active"
+        [disabled]="isSyncingIni()"
+      >
+        <i class="fa-solid fa-rotate" *ngIf="!isSyncingIni()"></i>
+        <mat-progress-bar
+          mode="indeterminate"
+          *ngIf="isSyncingIni()"
+        ></mat-progress-bar>
+        Sync .ini variables
+      </button>
     </div>
 
     <!-- SECONDARY / OCCASIONAL -->

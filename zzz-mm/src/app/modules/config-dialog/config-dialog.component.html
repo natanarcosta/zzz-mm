@@ -43,6 +43,16 @@
       </div>
       <div class="field-wrapper">
         <mat-form-field appearance="fill" class="w-90">
+          <mat-label>d3dx_user.ini path</mat-label>
+          <input type="text" matInput formControlName="userIniPath" />
+        </mat-form-field>
+        <i
+          class="fa-solid fa-folder-open"
+          (click)="handlePickFolder('userIni')"
+        ></i>
+      </div>
+      <div class="field-wrapper">
+        <mat-form-field appearance="fill" class="w-90">
           <mat-label>Navbar Type</mat-label>
           <mat-select formControlName="navbarType">
             <mat-option value="list">List</mat-option>

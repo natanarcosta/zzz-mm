@@ -14,6 +14,7 @@ export interface AppConfigs {
   navbar_type: NavbarTypeEnum;
   auto_fetch: boolean;
   disable_others: boolean;
+  user_ini_path: string;
 }
 
 interface CahceMod {

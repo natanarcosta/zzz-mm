@@ -26,6 +26,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
   scanModKeys: (modsRoot, folderName) =>
     ipcRenderer.invoke("scan-mod-keys", { modsRoot, folderName }),
   openModFolder: (payload) => ipcRenderer.invoke("open-mod-folder", payload),
+  syncModIniFromUser: (modFolderName, d3dxUserIniPath, modsRoot) =>
+    ipcRenderer.invoke(
+      "sync-mod-ini-from-d3dx",
+      modFolderName,
+      d3dxUserIniPath,
+      modsRoot
+    ),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

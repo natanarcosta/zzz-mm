@@ -97,6 +97,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   public isRefreshing = signal(false);
   public isGettingGBananaData = signal(false);
   public blur = signal<boolean>(false);
+  public isSyncingIni = signal<boolean>(false);
 
   public hasGameBananaUrl = computed(() => {
     const url = this.mod()?.json?.url;
@@ -421,5 +422,28 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const modsRoot = this._configService.config.source_mods_folder;
 
     this._electronBridge.openModFolder(modsRoot, mod.folderName);
+  }
+
+  handleSyncIniVariables() {
+    const configs = this._configService.config;
+    const userIniPath = configs.user_ini_path + '\\' + 'd3dx_user.ini';
+    const folderName = this.mod()?.folderName;
+    const rootMods = configs.source_mods_folder;
+
+    if (!folderName || !userIniPath || !rootMods) return;
+
+    this.isSyncingIni.set(true);
+    this._electronBridge
+      .syncModIniFromUser(folderName, userIniPath, rootMods)
+      .pipe(finalize(() => this.isSyncingIni.set(false)))
+      .subscribe({
+        next: (data) => {
+          if (data.success) {
+            this._notify.success('.ini file updated successfuly!');
+          } else {
+            this._notify.error('Error updating .ini file: ' + data.error);
+          }
+        },
+      });
   }
 }

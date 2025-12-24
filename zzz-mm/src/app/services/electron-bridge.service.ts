@@ -36,6 +36,11 @@ export interface ElectronAPI {
     folderName: string
   ): Promise<{ success: boolean; hotkeys?: ModHotkey[]; err?: any }>;
   openModFolder(payload: { modsRoot: string; folderName: string }): void;
+  syncModIniFromUser(payload: {
+    modFolderName: string;
+    d3dxUserIniPath: string;
+    modsRoot: string;
+  }): Promise<{ success: boolean; error?: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -117,5 +122,19 @@ export class ElectronBridgeService {
       modsRoot,
       folderName,
     });
+  }
+
+  syncModIniFromUser(
+    modFolderName: string,
+    d3dxUserIniPath: string,
+    modsRoot: string
+  ): Observable<{ success: boolean; error?: string }> {
+    return this.call(() =>
+      this._api()!.syncModIniFromUser({
+        modFolderName,
+        d3dxUserIniPath,
+        modsRoot,
+      })
+    );
   }
 }

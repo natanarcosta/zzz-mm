@@ -59,6 +59,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     navbarType: new FormControl(),
     autoFetch: new FormControl(),
     disableOthers: new FormControl(),
+    userIniPath: new FormControl(),
   });
 
   ngOnDestroy(): void {
@@ -78,6 +79,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           navbarType: config.navbar_type,
           autoFetch: config.auto_fetch,
           disableOthers: config.disable_others,
+          userIniPath: config.user_ini_path,
         });
         this._cdr.markForCheck();
       },
@@ -96,6 +98,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       navbar_type: this.configsForm.controls.navbarType.value,
       auto_fetch: this.configsForm.controls.autoFetch.value,
       disable_others: this.configsForm.controls.disableOthers.value,
+      user_ini_path: this.configsForm.controls.userIniPath.value,
     };
     this._configService.updateConfig({ ...config });
     this.closeDialog();
@@ -111,11 +114,21 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       });
   }
 
-  public async handlePickFolder(input: 'target' | 'source'): Promise<void> {
-    const control =
-      input === 'source'
-        ? this.configsForm.controls.sourcePath
-        : this.configsForm.controls.linkPath;
+  public async handlePickFolder(
+    input: 'target' | 'source' | 'userIni'
+  ): Promise<void> {
+    let control!: FormControl;
+    switch (input) {
+      case 'source':
+        control = this.configsForm.controls.sourcePath;
+        break;
+      case 'target':
+        control = this.configsForm.controls.linkPath;
+        break;
+      case 'userIni':
+        control = this.configsForm.controls.userIniPath;
+        break;
+    }
 
     const chosenPath = await this._configService.pickFolder();
     if (!chosenPath) return;

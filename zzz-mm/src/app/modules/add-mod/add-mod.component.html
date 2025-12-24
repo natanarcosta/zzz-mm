@@ -53,7 +53,7 @@
     <button
       mat-flat-button
       color="primary"
-      [disabled]="!file || form.invalid || isInstalling"
+      [disabled]="disableSubmit"
       (click)="confirm()"
     >
       <mat-progress-bar

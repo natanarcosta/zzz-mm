@@ -12,6 +12,7 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { NotificationService } from '../../services/notifications.service';
@@ -87,13 +88,26 @@ export class AddModComponent implements OnInit, OnDestroy {
   public previewUrl = signal<string | null>(null);
 
   form = new FormGroup({
-    character: new FormControl<ZZZAgent | null>(null, { nonNullable: true }),
-    name: new FormControl('', { nonNullable: true }),
+    character: new FormControl<ZZZAgent | null>(null, {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     url: new FormControl('', { nonNullable: true }),
   });
 
   get electronAPI() {
     return this._electronBridge.api;
+  }
+
+  get disableSubmit(): boolean {
+    if (this.data.mode === 'install') {
+      return !this.form.valid || !this.file || this.isInstalling;
+    }
+    return !this.file || this.isInstalling;
   }
 
   displayFn(character: ZZZAgent): string {
@@ -125,12 +139,10 @@ export class AddModComponent implements OnInit, OnDestroy {
 
     this.form.controls.url.valueChanges.subscribe({
       next: (data) => {
-        console.log(data);
         const isGbananaUrl = data.includes('gamebanana.com');
         const modId = Number(data.split('/').pop());
         if (isGbananaUrl && modId) {
           this.previewUrl.set(this._gBananaService.getGBananaImagePath(modId));
-          console.log(this.previewUrl());
         }
       },
     });
