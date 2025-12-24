@@ -1,7 +1,14 @@
 import { Injectable, signal } from '@angular/core';
 import { AgentMod, ZZZAgent } from '../models/agent.model';
 import { BehaviorSubject } from 'rxjs';
-import { agents } from '../../assets/character-data.json';
+import rawAgents from '../../assets/character-data.json';
+
+interface CharacterDataFile {
+  agents: {
+    name: string;
+    id: number;
+  }[];
+}
 
 @Injectable({
   providedIn: 'root',
@@ -18,9 +25,15 @@ export class MainService {
   }
 
   agentsInit() {
-    (agents as unknown as { name: string; id: number }[]).forEach((a) => {
-      this._agents().push({ name: a.name, id: a.id });
-    });
+    const agents = (rawAgents as CharacterDataFile).agents;
+
+    this._agents.set(
+      agents.map((a) => ({
+        name: a.name,
+        id: a.id,
+        mods: [],
+      }))
+    );
 
     this.agents$.next(this._agents());
   }

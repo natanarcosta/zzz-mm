@@ -16,6 +16,7 @@ try {
 
 let mainWindow;
 const isDev = !app.isPackaged;
+app.commandLine.appendSwitch("lang", "en-US");
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -36,7 +37,7 @@ function createWindow() {
   } else {
     mainWindow.loadURL(
       url.format({
-        pathname: path.join(__dirname, `/dist/zzz-mm/browser/index.html`),
+        pathname: path.join(__dirname, "dist/browser/index.html"),
         protocol: "file:",
         slashes: true,
       })

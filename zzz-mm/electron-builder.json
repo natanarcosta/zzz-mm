@@ -1,18 +1,35 @@
 {
   "appId": "com.natanarcosta.zzzmm",
   "productName": "ZZZ Mod Manager",
-  "files": ["dist/**", "main.js", "preload.js", "package.json"],
+  "asar": true,
+
+  "files": [
+    "dist/browser/**/*",
+    "main.js",
+    "preload.js",
+    "package.json",
+    "!**/locales/**",
+    "!**/*.map",
+    "!**/*.ts"
+  ],
+
   "extraResources": [
     {
-      "from": "node_modules/unrar-promise/bin",
+      "from": "resources/unrar",
       "to": "unrar",
-      "filter": ["**/*"]
-    },
-    {
-      "from": "src/assets",
-      "to": "src/assets",
-      "filter": ["**/*"]
+      "filter": ["unrar.exe"]
     }
   ],
-  "asarUnpack": ["**/unrar/**"]
+
+  "asarUnpack": ["**/*.node", "**/unrar/**"],
+
+  "directories": {
+    "buildResources": "build"
+  },
+
+  "win": {
+    "target": "nsis",
+    "icon": "build/favicon.ico",
+    "artifactName": "${productName}-Setup-${version}.${ext}"
+  }
 }
