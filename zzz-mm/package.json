@@ -3,7 +3,7 @@
   "main": "main.js",
   "version": "0.0.5",
   "author": "natanarcosta",
-  "description": "ZZZ Mod Manager",
+  "description": "Ava's ZZZ Mod Manager",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
