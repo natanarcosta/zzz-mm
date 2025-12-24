@@ -1,4 +1,4 @@
-name: Build and Release ZZZ Mod Manager
+name: Build and Ava's Release ZZZ Mod Manager
 
 on:
   push:
