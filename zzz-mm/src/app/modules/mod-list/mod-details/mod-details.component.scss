@@ -7,6 +7,8 @@
   backdrop-filter: blur(14px);
   border-left: 2px solid var(--main-color);
   color: white;
+
+  user-select: none;
 }
 
 /* IMAGE */
@@ -204,48 +206,32 @@
 
 /* ACTIONS */
 .actions {
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
 }
 
-/* AÇÃO PRINCIPAL */
 .primary-actions {
+  font-weight: 600;
+  padding: 8px;
+  gap: 8px;
   display: flex;
+  flex-direction: column;
+
+  .danger {
+    background: #e53935;
+  }
 }
 
-.primary-actions button {
-  width: 100%;
-  font-size: 1rem;
-  padding: 12px 0;
-  border-radius: 10px;
-}
-
-.primary-actions .primary {
-  background: var(--main-color);
-  color: black;
-}
-
-.primary-actions .danger {
-  background: #e53935;
-  color: white;
-}
-
-/* AÇÕES SECUNDÁRIAS */
-.secondary-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
-}
-
-.secondary-actions button {
-  font-size: 0.85rem;
-  opacity: 0.85;
+.main-actions {
   display: flex;
-  align-items: center;
+  gap: 8px;
   justify-content: center;
-  gap: 6px;
+  padding: 8px;
+
+  button {
+    height: 40px;
+    width: 100%;
+    padding: 8px;
+  }
 }

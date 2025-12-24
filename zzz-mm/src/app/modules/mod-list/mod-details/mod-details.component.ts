@@ -35,7 +35,15 @@ import {
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { finalize, map, Observable, startWith, Subject, takeUntil } from 'rxjs';
+import {
+  finalize,
+  firstValueFrom,
+  map,
+  Observable,
+  startWith,
+  Subject,
+  takeUntil,
+} from 'rxjs';
 import { AddModComponent } from '../../add-mod/add-mod.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AgentNamePipe } from '../../../shared/agent-name.pipe';
@@ -95,7 +103,20 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     return !!url && url.startsWith('https://gamebanana');
   });
 
-  public imageUrl = computed(() => this.mod()?.previewPath ?? '');
+  public imageUrl = computed(() => {
+    const mod = this.mod();
+    if (!mod) return '';
+
+    //  preview local
+    if (mod.previewPath) return mod.previewPath;
+
+    // fallback GameBanana
+    if (mod.json?.url?.includes('gamebanana') && mod.id) {
+      return this._gBananaService.getGBananaImagePath(mod.id);
+    }
+
+    return '';
+  });
 
   ngOnDestroy(): void {
     this._onDestroy$.next();
@@ -231,9 +252,9 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           const mod = this.mod();
-          if (!mod || !mod.json || !data.updated_at) return;
+          if (!mod || !mod.json || !data.updatedAt) return;
 
-          const remoteUpdatedAt = data.updated_at.toISOString();
+          const remoteUpdatedAt = data.updatedAt.toISOString();
           const januaryFirst = 1735700400000;
 
           const localUpdatedAt =
@@ -246,7 +267,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
             new Date(localUpdatedAt).getTime()
           ) {
             this.hasUpdate.set(true);
-            this.availableUpdate.set(data.updated_at);
+            this.availableUpdate.set(data.updatedAt);
           }
 
           this.mod.set({
@@ -259,7 +280,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
             },
           });
 
-          if (data.fullSizePreview) {
+          if (data.previews.full) {
             this.hasGbananaImage.set(true);
           }
 
@@ -268,7 +289,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
-  handleSaveModDetails() {
+  handleSaveGBananaImage() {
     if (!this.hasGbananaImage()) return;
 
     const fileName = 'preview.jpg';
@@ -281,9 +302,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       this.mod()?.folderName;
 
     this.isRefreshing.set(true);
-    console.log(previewPath);
-    console.log(fileName);
-    console.log(diskPath);
+
     this._electronBridge
       .downloadImage(previewPath, fileName, diskPath)
       .subscribe({
@@ -316,10 +335,29 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     if (!mod) return;
 
     await this._modManagerService.handleActivateMod(mod);
+    if (this._configService.config.disable_others) {
+      const selectedAgent = await firstValueFrom(
+        this._mainService.agentSelected
+      );
+      if (!selectedAgent) return;
+
+      const modIndex = selectedAgent.mods?.findIndex(
+        (_mod) => _mod.folderName === mod.folderName
+      );
+      if (modIndex && modIndex < 0) return;
+
+      const toDisable = selectedAgent.mods?.filter((_, i) => i !== modIndex);
+      if (!toDisable?.length) return;
+
+      for (const disableMod of toDisable) {
+        if (!disableMod) continue;
+        await this.handleRemoveMod(disableMod);
+      }
+    }
   }
 
-  async handleRemoveMod() {
-    const mod = this.mod();
+  async handleRemoveMod(targetMod?: AgentMod) {
+    const mod = targetMod ? targetMod : this.mod();
     if (!mod) return;
 
     await this._modManagerService.handleRemoveMod(mod);

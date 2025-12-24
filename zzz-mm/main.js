@@ -322,6 +322,31 @@ function createWindow() {
     return sanitized;
   }
 
+  function scanKeysForMod(modsRoot, folderName) {
+    const modPath = path.join(modsRoot, folderName);
+
+    if (!fs.existsSync(modPath)) {
+      throw new Error("Mod folder not found");
+    }
+
+    const iniFiles = findIniFiles(modPath);
+    let hotkeys = [];
+
+    for (const ini of iniFiles) {
+      const content = fs.readFileSync(ini, "utf-8");
+      const blocks = splitIniBlocks(content);
+
+      for (const block of blocks) {
+        if (!isKeySwapBlock(block.lines)) continue;
+
+        const parsed = parseKeySwapBlock(block.lines);
+        if (parsed) hotkeys.push(parsed);
+      }
+    }
+
+    return hotkeys;
+  }
+
   ipcMain.handle("install-mod", async (_, data) => {
     const { archivePath, destinationPath, modData } = data;
     const tempDir = path.join(os.tmpdir(), "zzz-mm", "install_" + Date.now());
@@ -355,13 +380,52 @@ function createWindow() {
 
       moveFolderContents(contentRoot, finalPath);
 
-      const scanResult = await scanKeysForMod(destinationPath, safeFolderName);
+      myConsole.log('Mod Data no install-mod: ');
+      myConsole.log(modData);
 
-      modJson.hotkeys = scanResult.hotkeys || [];
+      // DOWNLOAD PREVIEW IMAGE (optional)
+      if (modData.gamebananaPreviewUrl) {
+        try {
+          const previewPath = path.join(finalPath, "preview.jpg");
 
+          await new Promise((resolve, reject) => {
+            const file = fs.createWriteStream(previewPath);
+
+            https
+              .get(modData.gamebananaPreviewUrl, (response) => {
+                if (response.statusCode !== 200) {
+                  fs.unlink(previewPath, () => {});
+                  return resolve(); // falha silenciosa
+                }
+
+                response.pipe(file);
+                file.on("finish", () => {
+                  file.close(resolve);
+                });
+              })
+              .on("error", () => {
+                fs.unlink(previewPath, () => {});
+                resolve(); // falha silenciosa
+              });
+          });
+        } catch (err) {
+          console.warn("Preview download failed:", err.message);
+        }
+      }
+
+      // ✅ scan correto (sem IPC, sem await desnecessário)
+      let hotkeys = [];
+      try {
+        hotkeys = scanKeysForMod(destinationPath, safeFolderName);
+      } catch (e) {
+        console.warn("Key scan failed:", e.message);
+      }
+
+      // ✅ modJson criado UMA ÚNICA VEZ, já completo
       const modJson = {
         ...modData,
         folderName: safeFolderName,
+        hotkeys,
       };
 
       fs.writeFileSync(
@@ -586,31 +650,8 @@ function createWindow() {
 
   ipcMain.handle("scan-mod-keys", async (_, { modsRoot, folderName }) => {
     try {
-      const modPath = path.join(modsRoot, folderName);
-
-      if (!fs.existsSync(modPath)) {
-        return { success: false, error: "Mod folder not found" };
-      }
-
-      const iniFiles = findIniFiles(modPath);
-
-      let hotkeys = [];
-
-      for (const ini of iniFiles) {
-        const content = fs.readFileSync(ini, "utf-8");
-        const blocks = splitIniBlocks(content);
-
-        for (const block of blocks) {
-          if (!isKeySwapBlock(block.lines)) continue;
-
-          const parsed = parseKeySwapBlock(block.lines);
-          if (parsed) hotkeys.push(parsed);
-        }
-      }
-      return {
-        success: true,
-        hotkeys,
-      };
+      const hotkeys = scanKeysForMod(modsRoot, folderName);
+      return { success: true, hotkeys };
     } catch (err) {
       return { success: false, error: err.message };
     }

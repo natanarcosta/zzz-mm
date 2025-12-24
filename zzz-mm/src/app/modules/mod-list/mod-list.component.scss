@@ -8,6 +8,8 @@
   position: relative;
   width: calc(80dvw - 56px);
 
+  user-select: none;
+
   &.min-h {
     min-height: 75dvh;
   }

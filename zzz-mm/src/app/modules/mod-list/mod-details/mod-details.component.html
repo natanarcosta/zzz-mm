@@ -49,14 +49,21 @@
     <!-- TOOLBOX -->
     <section class="toolbox" *ngIf="hasGameBananaUrl()">
       <button mat-flat-button (click)="handleGetModDataFromGBanana()">
-        <i class="fa-solid fa-cloud-arrow-down"></i>
+        <i
+          class="fa-solid fa-cloud-arrow-down"
+          *ngIf="!isGettingGBananaData()"
+        ></i>
+        <mat-progress-bar
+          mode="indeterminate"
+          *ngIf="isGettingGBananaData()"
+        ></mat-progress-bar>
         Sync from GameBanana
       </button>
 
       <button
         mat-stroked-button
         *ngIf="hasGbananaImage()"
-        (click)="handleSaveModDetails()"
+        (click)="handleSaveGBananaImage()"
       >
         <i class="fa-solid fa-image"></i>
         Save Image
@@ -162,29 +169,54 @@
 
   <!-- ACTIONS -->
   <section class="actions">
+    <!-- PRIMARY -->
     <div class="primary-actions">
       <button
         mat-flat-button
-        class="primary"
-        [class.danger]="mod.json?.active"
+        class="primary-action"
+        color="{{ mod.json?.active ? 'warn' : 'primary' }}"
         (click)="mod.json?.active ? handleRemoveMod() : handleActivateMod()"
+        *ngIf="!editMode()"
       >
         {{ mod.json?.active ? "Disable" : "Activate" }}
       </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="handleSaveEdit()"
+        *ngIf="editMode()"
+      >
+        Save
+      </button>
     </div>
 
-    <div class="secondary-actions">
-      <button mat-stroked-button (click)="scanKeys()">Detect keybinds</button>
-
+    <!-- MAIN ACTIONS -->
+    <div class="main-actions">
       <button mat-stroked-button (click)="handleOpenModFolder()">
+        <i class="fa-solid fa-folder-open"></i>
         Open folder
       </button>
 
       <button mat-stroked-button (click)="toggleEditMode()">
-        Edit details
+        <i class="fa-regular fa-pen-to-square"></i>
+        {{ editMode() ? "Cancel edit" : "Edit details" }}
+      </button>
+    </div>
+
+    <!-- SECONDARY / OCCASIONAL -->
+    <div class="main-actions">
+      <button mat-stroked-button (click)="scanKeys()">
+        <i class="fa-regular fa-keyboard"></i> Detect keybinds
       </button>
 
-      <button mat-stroked-button (click)="closeDialog()">Close</button>
+      <button mat-stroked-button (click)="handleUpdateExistindMod()">
+        <i class="fa-solid fa-file-pen"></i>
+        Update
+      </button>
+      <button mat-stroked-button (click)="closeDialog()">
+        <i class="fa-solid fa-xmark"></i> Close
+      </button>
     </div>
   </section>
 </main>

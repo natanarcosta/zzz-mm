@@ -32,12 +32,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MainService } from '../../services/main.service';
 import { AgentMod, ZZZAgent } from '../../models/agent.model';
-import { map, Observable, startWith } from 'rxjs';
+import { finalize, firstValueFrom, map, Observable, startWith } from 'rxjs';
 import { AddModMode } from '../../models/types.model';
 import {
   GameBananaService,
   GameBananaModData,
 } from '../../services/gamebanana.service';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-add-mod',
@@ -54,6 +55,7 @@ import {
     MatDialogModule,
     MatIconModule,
     MatAutocompleteModule,
+    MatProgressBarModule,
   ],
 })
 export class AddModComponent implements OnInit, OnDestroy {
@@ -81,6 +83,8 @@ export class AddModComponent implements OnInit, OnDestroy {
   file: File | null = null;
   filePath: string | null = null;
   isDragging = false;
+  isInstalling = false;
+  public previewUrl = signal<string | null>(null);
 
   form = new FormGroup({
     character: new FormControl<ZZZAgent | null>(null, { nonNullable: true }),
@@ -118,6 +122,18 @@ export class AddModComponent implements OnInit, OnDestroy {
         return name ? this._filter(value) : this.agents.slice();
       })
     );
+
+    this.form.controls.url.valueChanges.subscribe({
+      next: (data) => {
+        console.log(data);
+        const isGbananaUrl = data.includes('gamebanana.com');
+        const modId = Number(data.split('/').pop());
+        if (isGbananaUrl && modId) {
+          this.previewUrl.set(this._gBananaService.getGBananaImagePath(modId));
+          console.log(this.previewUrl());
+        }
+      },
+    });
   }
 
   private _filter(name: string): ZZZAgent[] {
@@ -172,19 +188,6 @@ export class AddModComponent implements OnInit, OnDestroy {
     if (this.data.mode === 'install' && !this.form.valid) return;
     if (!this.electronAPI) return;
 
-    if (this._config.auto_fetch) {
-      const url = this.form.controls.url.value;
-      const isGameBananaMod = url.includes('gamebanana.com');
-      if (isGameBananaMod) {
-        const id = Number(url.split('/')[url.split('/').length - 1]);
-        if (id && !isNaN(id)) {
-          this.handleAddGameBananMod(id);
-          return;
-        }
-      }
-    }
-
-    console.log('Chegou no switch');
     switch (this.data.mode) {
       case 'install':
         this.installMod();
@@ -195,36 +198,19 @@ export class AddModComponent implements OnInit, OnDestroy {
     }
   }
 
-  handleAddGameBananMod(id: number): void {
-    if (!id) return;
-
-    this._gBananaService.getModData(id).subscribe({
-      next: (data) => {
-        const image = this._gBananaService.getGBananaImagePath(id);
-        console.log(data);
-        this._gBananaData.set(data);
-        this.installMod();
-
-        // const fileName = 'preview.jpg';
-        // const previewPath = this.mod()?.previewPath;
-        // if (!previewPath) return;
-
-        // const diskPath =
-        //   this._configService.config.source_mods_folder + '\\' + data.name;
-
-        // this._electronBridge
-        //   .downloadImage(previewPath, fileName, diskPath)
-        //   .subscribe({
-        //     next: () => {},
-        //   });
-      },
-    });
-  }
-
-  installMod() {
+  async installMod() {
     if (!this.file || !this.filePath) return;
     if (this.data.mode === 'install' && !this.form.valid) return;
     if (!this.electronAPI) return;
+
+    this.isInstalling = true;
+
+    const modId = Number(this.form.controls.url.value.split('/').pop());
+    const isGBananaUrl = this.form.controls.url.value.includes('gamebanana');
+    if (modId && this._config.auto_fetch && isGBananaUrl) {
+      const data = await firstValueFrom(this._gBananaService.getModData(modId));
+      this._gBananaData.set(data);
+    }
 
     const now = new Date().toISOString();
     const payload = {
@@ -236,6 +222,10 @@ export class AddModComponent implements OnInit, OnDestroy {
         character: (this.form.controls.character.value as any).name,
         localInstalledAt: now,
         localUpdatedAt: now,
+        gamebananaPreviewUrl:
+          this._config.auto_fetch && isGBananaUrl
+            ? this._gBananaService.getGBananaImagePath(modId)
+            : null,
       },
     };
 
@@ -246,15 +236,18 @@ export class AddModComponent implements OnInit, OnDestroy {
 
     console.log('Payload: ', payload);
 
-    this._electronBridge.installMod(payload).subscribe({
-      next: (value) => {
-        if (value.success) {
-          this._configService.refreshMods();
-          this._notify.success('Mod instalado com sucesso');
-          this._dialogRef.close(true);
-        }
-      },
-    });
+    this._electronBridge
+      .installMod(payload)
+      .pipe(finalize(() => (this.isInstalling = false)))
+      .subscribe({
+        next: (value) => {
+          if (value.success) {
+            this._configService.refreshMods();
+            this._notify.success('Mod instalado com sucesso');
+            this._dialogRef.close(true);
+          }
+        },
+      });
   }
 
   updateMod() {
@@ -277,12 +270,14 @@ export class AddModComponent implements OnInit, OnDestroy {
       },
     };
 
+    this.isInstalling = true;
     this._electronBridge
       .extractModForUpdate(
         payload.archivePath,
         mod.folderName,
         this._config.source_mods_folder
       )
+      .pipe(finalize(() => (this.isInstalling = false)))
       .subscribe({
         next: (result) => {
           if (result.success) {
