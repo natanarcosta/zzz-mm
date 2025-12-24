@@ -18,7 +18,7 @@ export interface ModJson {
   description?: string;
   preview: string;
   url: string;
-  hotkeys: Array<{ description: string; key: string }>;
+  hotkeys: Array<ModHotkey>;
   active: boolean;
   updatedAt?: string;
 
@@ -26,4 +26,10 @@ export interface ModJson {
   localUpdatedAt: string;
 
   remoteUpdatedAt?: string;
+}
+
+export interface ModHotkey {
+  description: string;
+  key: string;
+  source?: string;
 }

@@ -18,7 +18,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getFilePath: (file) => webUtils.getPathForFile(file),
   selectDirectory: (options) => ipcRenderer.invoke("select-directory", options),
   extractModForUpdate: (zipPath, targetFolder, baseModsDir) =>
-    ipcRenderer.invoke("extract-mod-update", { zipPath, targetFolder, baseModsDir }),
+    ipcRenderer.invoke("extract-mod-update", {
+      zipPath,
+      targetFolder,
+      baseModsDir,
+    }),
+  scanModKeys: (modsRoot, folderName) =>
+    ipcRenderer.invoke("scan-mod-keys", { modsRoot, folderName }),
+  openModFolder: (payload) => ipcRenderer.invoke("open-mod-folder", payload),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

@@ -161,39 +161,30 @@
   </section>
 
   <!-- ACTIONS -->
-  <footer class="actions">
-    <button
-      mat-flat-button
-      [color]="mod.json?.active ? 'warn' : 'primary'"
-      (click)="mod.json?.active ? handleRemoveMod() : handleActivateMod()"
-      *ngIf="!editMode()"
-    >
-      <i
-        class="fa-solid fa-ban"
-        [ngClass]="{
-          'fa-ban': mod.json?.active,
-          'fa-check': !mod.json?.active
-        }"
-      ></i>
-      {{ mod.json?.active ? "Disable" : "Activate" }}
-    </button>
+  <section class="actions">
+    <div class="primary-actions">
+      <button
+        mat-flat-button
+        class="primary"
+        [class.danger]="mod.json?.active"
+        (click)="mod.json?.active ? handleRemoveMod() : handleActivateMod()"
+      >
+        {{ mod.json?.active ? "Disable" : "Activate" }}
+      </button>
+    </div>
 
-    <button
-      mat-flat-button
-      color="primary"
-      (click)="handleSaveEdit()"
-      *ngIf="editMode()"
-    >
-      <i class="fa-solid fa-floppy-disk"></i>
-      Save
-    </button>
+    <div class="secondary-actions">
+      <button mat-stroked-button (click)="scanKeys()">Detect keybinds</button>
 
-    <button mat-stroked-button (click)="toggleEditMode()">
-      {{ editMode() ? "Cancel" : "Edit" }}
-    </button>
+      <button mat-stroked-button (click)="handleOpenModFolder()">
+        Open folder
+      </button>
 
-    <button mat-stroked-button (click)="closeDialog()">
-      <i class="fa-solid fa-xmark"></i> Close
-    </button>
-  </footer>
+      <button mat-stroked-button (click)="toggleEditMode()">
+        Edit details
+      </button>
+
+      <button mat-stroked-button (click)="closeDialog()">Close</button>
+    </div>
+  </section>
 </main>

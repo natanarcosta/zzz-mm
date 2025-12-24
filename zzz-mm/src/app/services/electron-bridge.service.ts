@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { AppConfigs } from './config.service';
-import { Observable, throwError, from } from 'rxjs';
+import { Observable, throwError, from, of } from 'rxjs';
+import { ModHotkey } from '../models/agent.model';
 
 export interface ElectronAPI {
   readFolder(folderPath: string): Promise<string[]>;
@@ -30,6 +31,11 @@ export interface ElectronAPI {
     targetFolder: string,
     baseModsDir: string
   ): Promise<{ success: boolean; error?: string }>;
+  scanModKeys(
+    modsRoot: string,
+    folderName: string
+  ): Promise<{ success: boolean; hotkeys?: ModHotkey[]; err?: any }>;
+  openModFolder(payload: { modsRoot: string; folderName: string }): void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -94,5 +100,22 @@ export class ElectronBridgeService {
     return this.call(() =>
       this._api()!.extractModForUpdate(zipPath, targetFolder, baseModsDir)
     );
+  }
+
+  scanModKeys(
+    folderName: string,
+    sourceFolder: string
+  ): Observable<{ success: boolean; err?: any; hotkeys?: ModHotkey[] }> {
+    return from(
+      this.api?.scanModKeys(sourceFolder, folderName) ??
+        Promise.resolve({ success: false })
+    );
+  }
+
+  openModFolder(modsRoot: string, folderName: string) {
+    return this.api!.openModFolder({
+      modsRoot,
+      folderName,
+    });
   }
 }

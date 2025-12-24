@@ -355,6 +355,10 @@ function createWindow() {
 
       moveFolderContents(contentRoot, finalPath);
 
+      const scanResult = await scanKeysForMod(destinationPath, safeFolderName);
+
+      modJson.hotkeys = scanResult.hotkeys || [];
+
       const modJson = {
         ...modData,
         folderName: safeFolderName,
@@ -399,9 +403,6 @@ function createWindow() {
       const tempDir = path.join(os.tmpdir(), "zzz-mm", "install_" + Date.now());
 
       try {
-        myConsole.log("UPDATE MOD:");
-        myConsole.log(zipPath, targetFolder, baseModsDir);
-
         fs.mkdirSync(tempDir, { recursive: true });
 
         // 1) extrair
@@ -446,11 +447,190 @@ function createWindow() {
         console.error("EXTRACT_MOD_UPDATE_ERROR:", err);
         return { success: false, error: err.message };
       } finally {
-        myConsole.log("Finally: ");
         fs.rmSync(tempDir, { recursive: true, force: true });
       }
     }
   );
+
+  const VK_MAP = {
+    VK_UP: "UP",
+    VK_DOWN: "DOWN",
+    VK_LEFT: "LEFT",
+    VK_RIGHT: "RIGHT",
+
+    VK_NUMPAD0: "NUM0",
+    VK_NUMPAD1: "NUM1",
+    VK_NUMPAD2: "NUM2",
+    VK_NUMPAD3: "NUM3",
+
+    VK_F1: "F1",
+    VK_F2: "F2",
+    VK_F3: "F3",
+
+    VK_HOME: "HOME",
+    VK_END: "END",
+  };
+
+  function findIniFiles(dir, result = []) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        findIniFiles(fullPath, result);
+      } else if (
+        entry.isFile() &&
+        entry.name.toLowerCase().endsWith(".ini") &&
+        !["d3dx.ini", "dxgi.ini"].includes(entry.name.toLowerCase())
+      ) {
+        result.push(fullPath);
+      }
+    }
+
+    return result;
+  }
+
+  function extractLabel(lines) {
+    for (const line of lines) {
+      const match = line.match(/^\$(\w+)\s*=/);
+      if (!match) continue;
+
+      const label = match[1];
+
+      if (label.toLowerCase() === "active") continue;
+
+      // tratar swapkey genérico
+      if (/^swapkey\d+$/i.test(label)) {
+        const index = label.match(/\d+/)?.[0];
+        return `KeySwap${index ? ` #${index}` : ""}`;
+      }
+
+      return label;
+    }
+
+    return "KeySwap";
+  }
+
+  function normalizeKey(raw) {
+    const tokens = raw
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => !t.startsWith("no_"));
+
+    const parts = [];
+
+    if (tokens.includes("ctrl")) parts.push("CTRL");
+    if (tokens.includes("shift")) parts.push("SHIFT");
+    if (tokens.includes("alt")) parts.push("ALT");
+
+    const vk = tokens.find((t) => t.startsWith("vk_"));
+    if (vk) {
+      parts.push(
+        VK_MAP[vk.toUpperCase()] ?? vk.replace("vk_", "").toUpperCase()
+      );
+    }
+
+    return parts.join(" ");
+  }
+
+  function parseKeySwapBlock(blockLines) {
+    const keyLine = blockLines.find((l) => l.toLowerCase().startsWith("key"));
+    if (!keyLine) return null;
+
+    const rawKey = keyLine.split("=")[1].trim();
+    const label = extractLabel(blockLines);
+
+    return {
+      description: label,
+      key: normalizeKey(rawKey),
+      source: "ini",
+    };
+  }
+
+  function splitIniBlocks(content) {
+    const blocks = [];
+    let current = null;
+
+    const lines = content.split(/\r?\n/);
+
+    for (const line of lines) {
+      const headerMatch = line.match(/^\[(.+?)\]$/);
+
+      if (headerMatch) {
+        if (current) blocks.push(current);
+
+        current = {
+          name: headerMatch[1],
+          lines: [],
+        };
+      } else if (current) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith(";")) {
+          current.lines.push(trimmed);
+        }
+      }
+    }
+
+    if (current) blocks.push(current);
+
+    return blocks;
+  }
+
+  function isKeySwapBlock(lines) {
+    return (
+      lines.some((l) => l.trim().startsWith("key")) &&
+      lines.some((l) => l.trim().startsWith("$"))
+    );
+  }
+
+  ipcMain.handle("scan-mod-keys", async (_, { modsRoot, folderName }) => {
+    try {
+      const modPath = path.join(modsRoot, folderName);
+
+      if (!fs.existsSync(modPath)) {
+        return { success: false, error: "Mod folder not found" };
+      }
+
+      const iniFiles = findIniFiles(modPath);
+
+      let hotkeys = [];
+
+      for (const ini of iniFiles) {
+        const content = fs.readFileSync(ini, "utf-8");
+        const blocks = splitIniBlocks(content);
+
+        for (const block of blocks) {
+          if (!isKeySwapBlock(block.lines)) continue;
+
+          const parsed = parseKeySwapBlock(block.lines);
+          if (parsed) hotkeys.push(parsed);
+        }
+      }
+      return {
+        success: true,
+        hotkeys,
+      };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle("open-mod-folder", async (_, { modsRoot, folderName }) => {
+    try {
+      const fullPath = path.join(modsRoot, folderName);
+
+      if (!fs.existsSync(fullPath)) {
+        return { success: false, error: "Mod folder not found" };
+      }
+
+      await shell.openPath(fullPath);
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
 }
 app.on("ready", createWindow);
 app.on("window-all-closed", function () {

@@ -353,4 +353,35 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       )
       .subscribe();
   }
+
+  scanKeys() {
+    const mod = this.mod();
+    if (!mod) return;
+    const sourceFolderPath = this._configService.config.source_mods_folder;
+
+    this._electronBridge
+      .scanModKeys(mod.folderName, sourceFolderPath)
+      .subscribe((res) => {
+        if (!res.success) return;
+
+        if (res.hotkeys?.length) {
+          mod.json!.hotkeys = res.hotkeys;
+
+          this.mod.set({ ...mod });
+          this._electronBridge.api?.writeJsonFile(
+            `${sourceFolderPath}\\${mod.folderName}\\mod.json`,
+            mod.json
+          );
+        }
+      });
+  }
+
+  handleOpenModFolder() {
+    const mod = this.mod();
+    if (!mod?.folderName) return;
+
+    const modsRoot = this._configService.config.source_mods_folder;
+
+    this._electronBridge.openModFolder(modsRoot, mod.folderName);
+  }
 }
