@@ -1,13 +1,20 @@
-name: Build & Release ZZZ Mod Manager
+name: Build and Release ZZZ Mod Manager
 
 on:
   push:
     tags:
       - "v*.*.*" # Ex: v0.1.0
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: zzz-mm
 
     steps:
       - name: Checkout repository
@@ -17,22 +24,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
+          cache-dependency-path: zzz-mm/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Angular (production)
-        run: npm run build
-
       - name: Build Electron app
-        run: npx electron-builder --win --publish never
+        run: npm run electron:dist
 
-      - name: Create GitHub Release
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.exe
-            dist/*.blockmap
+            zzz-mm/dist/*.exe
+            zzz-mm/dist/*.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
