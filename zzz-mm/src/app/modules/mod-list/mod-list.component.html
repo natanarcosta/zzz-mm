@@ -45,7 +45,13 @@
     @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
     <div class="mod-card" [ngClass]="{ active: agentMod.json?.active }">
       <div class="image">
-        <img [ngClass]="{ censor: blur() }" [src]="agentMod.previewPath" />
+        <img
+          [ngClass]="{ censor: blur() }"
+          [src]="
+            agentMod.previewPath ||
+            'assets/char-portraits/' + selectedAgent()!.id + '.png'
+          "
+        />
 
         <!-- OVERLAY -->
         <div class="overlay">

@@ -1,13 +1,34 @@
 <main id="mod-details" *ngIf="mod() as mod">
   <!-- IMAGE -->
+
+  @if(mod.previewPath) {
   <div class="image">
     <img
-      [src]="imageUrl()"
+      [src]="previewUrl() || imageUrl()"
       loading="lazy"
       decoding="async"
-      [ngClass]="{ censor: blur() }"
+      [ngClass]="{ censor: blur(), dragging: isDragging }"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
     />
+    <p class="file" *ngIf="file">📦 {{ file.name }}</p>
   </div>
+  } @else {
+  <div
+    class="dropzone"
+    [ngClass]="{ 'has-image': previewUrl(), dragging: isDragging }"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <mat-icon class="icon" *ngIf="!previewUrl()">upload</mat-icon>
+
+    <p class="title">Arraste o mod aqui</p>
+    <p class="subtitle">ou solte um arquivo .jpg / .png</p>
+    <p class="file" *ngIf="file">📦 {{ file.name }}</p>
+  </div>
+  }
 
   <!-- CONTENT -->
   <section class="content">
@@ -188,6 +209,15 @@
         *ngIf="editMode()"
       >
         Save
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="handleSaveLocalImage()"
+        *ngIf="file"
+      >
+        Save Image
       </button>
     </div>
 

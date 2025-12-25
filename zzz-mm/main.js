@@ -10,6 +10,14 @@ const os = require("os");
 var nodeConsole = require("console");
 var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
 
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("UNHANDLED PROMISE:", reason);
+});
+
 try {
   require("electron-reloader")(module);
 } catch {}
@@ -268,11 +276,20 @@ function createWindow() {
     return current;
   }
 
-  function moveFolderContents(src, dest) {
-    for (const entry of fs.readdirSync(src)) {
-      const srcPath = path.join(src, entry);
-      const destPath = path.join(dest, entry);
-      fs.cpSync(srcPath, destPath, { recursive: true });
+  async function copyRecursive(src, dest) {
+    const entries = await fs.promises.readdir(src, { withFileTypes: true });
+
+    await fs.promises.mkdir(dest, { recursive: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        await copyRecursive(srcPath, destPath);
+      } else if (entry.isFile()) {
+        await fs.promises.copyFile(srcPath, destPath);
+      }
     }
   }
 
@@ -380,10 +397,7 @@ function createWindow() {
 
       fs.mkdirSync(finalPath, { recursive: true });
 
-      moveFolderContents(contentRoot, finalPath);
-
-      myConsole.log("Mod Data no install-mod: ");
-      myConsole.log(modData);
+      await copyRecursive(contentRoot, finalPath);
 
       // DOWNLOAD PREVIEW IMAGE (optional)
       if (modData.gamebananaPreviewUrl) {
@@ -814,6 +828,35 @@ function createWindow() {
           success: false,
           error: err.message || "Unknown error",
         };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    "save-mod-preview",
+    async (_, { sourcePath, modFolderPath }) => {
+      try {
+        if (!sourcePath || !modFolderPath) {
+          return { success: false, error: "Invalid payload" };
+        }
+
+        if (!fs.existsSync(sourcePath)) {
+          return { success: false, error: "Source file not found" };
+        }
+
+        const ext = path.extname(sourcePath).toLowerCase();
+        if (![".png", ".jpg", ".jpeg"].includes(ext)) {
+          return { success: false, error: "Invalid image format" };
+        }
+
+        const targetPath = path.join(modFolderPath, "preview.jpg");
+
+        fs.copyFileSync(sourcePath, targetPath);
+
+        return { success: true, previewPath: targetPath };
+      } catch (err) {
+        console.error("SAVE MOD PREVIEW ERROR:", err);
+        return { success: false, error: err.message };
       }
     }
   );

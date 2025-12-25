@@ -35,6 +35,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ),
   quitApp: () => ipcRenderer.invoke("app-quit"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+  saveModPreview: (payload) => ipcRenderer.invoke("save-mod-preview", payload),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

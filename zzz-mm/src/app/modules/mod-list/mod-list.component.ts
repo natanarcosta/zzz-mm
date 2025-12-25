@@ -10,7 +10,7 @@ import {
 import { AgentMod, ZZZAgent } from '../../models/agent.model';
 import { CommonModule } from '@angular/common';
 import { MainService } from '../../services/main.service';
-import { elementAt, Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ModDetailsComponent } from './mod-details/mod-details.component';
 import { ConfigService } from '../../services/config.service';
@@ -162,6 +162,7 @@ export class ModListComponent implements OnInit, OnDestroy {
 
     const randomIndex = Math.floor(Math.random() * agentMods.length);
     const randomMod = agentMods[randomIndex];
+
     if (randomMod.json?.active) return;
     //Enable random mod
     await this.handleActivateMod(randomMod);

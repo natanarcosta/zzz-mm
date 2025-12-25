@@ -229,4 +229,12 @@ export class ConfigService {
     this.loadFolders();
     return from(this.populateCharacterMods());
   }
+
+  deleteByFolder(folderName: string) {
+    for (const key of this._modCacheService.keys) {
+      if (key.startsWith(folderName + ':')) {
+        this._modCacheService.delete(key);
+      }
+    }
+  }
 }

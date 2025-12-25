@@ -43,6 +43,10 @@ export interface ElectronAPI {
   }): Promise<{ success: boolean; error?: string }>;
   quitApp(): void;
   getAppVersion: () => Promise<string>;
+  saveModPreview(payload: {
+    sourcePath: string;
+    modFolderPath: string;
+  }): Promise<{ success: boolean; previewPath?: string; error?: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -138,6 +142,10 @@ export class ElectronBridgeService {
         modsRoot,
       })
     );
+  }
+
+  saveModPreview(payload: { sourcePath: string; modFolderPath: string }) {
+    return this.call(() => this.api!.saveModPreview(payload));
   }
 
   quitApp(): void {

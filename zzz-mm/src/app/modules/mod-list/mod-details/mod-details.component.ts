@@ -47,6 +47,7 @@ import {
 import { AddModComponent } from '../../add-mod/add-mod.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AgentNamePipe } from '../../../shared/agent-name.pipe';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-mod-details',
@@ -65,6 +66,7 @@ import { AgentNamePipe } from '../../../shared/agent-name.pipe';
     MatAutocompleteModule,
     MatProgressBarModule,
     AgentNamePipe,
+    MatIconModule,
   ],
 })
 export class ModDetailsComponent implements OnInit, OnDestroy {
@@ -98,6 +100,10 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   public isGettingGBananaData = signal(false);
   public blur = signal<boolean>(false);
   public isSyncingIni = signal<boolean>(false);
+  public isDragging = false;
+  file: File | null = null;
+  filePath: string | null = null;
+  public previewUrl = signal<string | null>(null);
 
   public hasGameBananaUrl = computed(() => {
     const url = this.mod()?.json?.url;
@@ -443,6 +449,80 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
           } else {
             this._notify.error('Error updating .ini file: ' + data.error);
           }
+        },
+      });
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const file = event.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    const filePath = this.electronAPI?.getFilePath(file as any);
+    if (!filePath) return;
+
+    this.file = file;
+    this.filePath = filePath;
+
+    const objectUrl = URL.createObjectURL(file);
+    this.previewUrl.set(objectUrl);
+    this._cdr.markForCheck();
+  }
+
+  handleSaveLocalImage() {
+    if (!this.filePath) return;
+
+    const mod = this.mod();
+    if (!mod) return;
+
+    const modFolderPath = this.modFolderPath;
+
+    this._electronBridge
+      .saveModPreview({
+        sourcePath: this.filePath,
+        modFolderPath,
+      })
+      .subscribe({
+        next: (res) => {
+          if (!res.success) {
+            this._notify.error(res.error ?? 'Failed to save image');
+            return;
+          }
+          const json = mod.json;
+          const now = new Date().toISOString();
+          if (json) json.localUpdatedAt = now;
+
+          this.mod.set({
+            ...mod,
+            previewPath: res.previewPath,
+          });
+          this._configService.deleteByFolder(mod.folderName);
+          this._notify.success('Preview image saved');
+          this.file = null;
+          this.filePath = null;
+          this.handleRefreshMods();
+          this._cdr.markForCheck();
         },
       });
   }

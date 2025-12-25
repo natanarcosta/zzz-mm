@@ -257,6 +257,8 @@ export class AddModComponent implements OnInit, OnDestroy {
             this._configService.refreshMods();
             this._notify.success('Mod instalado com sucesso');
             this._dialogRef.close(true);
+          } else {
+            this._notify.error(value.error || 'Erro ao instalar mod');
           }
         },
       });
