@@ -39,10 +39,12 @@ npm run electron:dev
 Electron loads Angular from http://localhost:4200 in development mode.
 
 📦 Mod Structure
+```
 MyMod/
 ├── mod.json
 ├── preview.png (optional)
 └── mod files...
+```
 
 
 ⚠️ Disclaimer
