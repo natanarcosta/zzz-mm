@@ -11,6 +11,7 @@ const {
 } = require("./electron/services/mod-install.service");
 
 const { registerIpcHandlers } = require("./electron/ipc");
+const { syncIniFromD3dx } = require("./electron/services/sync-ini.service");
 
 var nodeConsole = require("console");
 // eslint-disable-next-line no-unused-vars
@@ -80,152 +81,9 @@ function createWindow() {
       installMod: installer.installMod,
       extractModUpdate: installer.extractModUpdate,
       sanitizeFileName,
+      syncIniFromD3dx,
     },
     app
-  );
-
-  ipcMain.handle(
-    "sync-mod-ini-from-d3dx",
-    async (_, { modFolderName, d3dxUserIniPath, modsRoot }) => {
-      try {
-        // =========================
-        // VALIDATIONS
-        // =========================
-        if (!modFolderName || !d3dxUserIniPath || !modsRoot) {
-          return { success: false, error: "Invalid payload" };
-        }
-
-        if (!fs.existsSync(d3dxUserIniPath)) {
-          return { success: false, error: "d3dx_user.ini not found" };
-        }
-
-        if (!fs.existsSync(modsRoot)) {
-          return { success: false, error: "Mods root folder not found" };
-        }
-
-        // =========================
-        // READ d3dx_user.ini
-        // =========================
-        const d3dxContent = fs.readFileSync(d3dxUserIniPath, "utf-8");
-        const lines = d3dxContent.split(/\r?\n/);
-
-        /**
-         * Structure:
-         * {
-         *   "relative/path/to/file.ini": {
-         *     variable: value
-         *   }
-         * }
-         */
-        const iniMap = {};
-
-        // Regex:
-        // $\mods\<modFolder>\<path>\<file>.ini\<variable> = <value>
-        const regex =
-          /^\$\\mods\\([^\\]+)\\(.+?\.ini)\\([a-zA-Z0-9_]+)\s*=\s*(.+)$/;
-
-        for (const line of lines) {
-          const match = line.match(regex);
-          if (!match) continue;
-
-          const folder = match[1].trim();
-          const relativeIniPath = match[2];
-          const variable = match[3];
-          const value = match[4];
-
-          // Only target the selected mod folder
-          if (folder.toLowerCase() !== modFolderName.toLowerCase()) continue;
-
-          if (!iniMap[relativeIniPath]) {
-            iniMap[relativeIniPath] = {};
-          }
-
-          iniMap[relativeIniPath][variable] = value;
-        }
-
-        const iniFiles = Object.keys(iniMap);
-        if (iniFiles.length === 0) {
-          return {
-            success: false,
-            error: "No matching entries found in d3dx_user.ini",
-          };
-        }
-
-        // =========================
-        // APPLY TO EACH mod.ini
-        // =========================
-        for (const relativeIniPath of iniFiles) {
-          const absoluteIniPath = path.join(
-            modsRoot,
-            modFolderName,
-            relativeIniPath
-          );
-
-          if (!fs.existsSync(absoluteIniPath)) {
-            // Skip silently — mod might have optional ini
-            continue;
-          }
-
-          // Backup
-          const backupPath = absoluteIniPath + `.bak-${Date.now().toString()}`;
-          fs.copyFileSync(absoluteIniPath, backupPath);
-
-          const originalContent = fs.readFileSync(absoluteIniPath, "utf-8");
-          const iniLines = originalContent.split(/\r?\n/);
-
-          const valuesToApply = iniMap[relativeIniPath];
-          let modified = false;
-
-          let inConstantsSection = false;
-
-          const updatedLines = iniLines.map((line) => {
-            const trimmed = line.trim();
-
-            // Detect section headers
-            const sectionMatch = trimmed.match(/^\[(.+?)\]$/);
-            if (sectionMatch) {
-              inConstantsSection =
-                sectionMatch[1].toLowerCase() === "constants";
-              return line;
-            }
-
-            if (!inConstantsSection) {
-              return line;
-            }
-
-            // Match ONLY constant declarations
-            const varMatch = line.match(
-              /^\s*(global\s+persist\s+|global\s+)?\$(\w+)\s*=\s*(.+)$/
-            );
-
-            if (!varMatch) return line;
-
-            const varName = varMatch[2];
-
-            if (Object.prototype.hasOwnProperty.call(valuesToApply, varName)) {
-              modified = true;
-
-              const prefix = varMatch[1] ?? "";
-              return `${prefix}$${varName} = ${valuesToApply[varName]}`;
-            }
-
-            return line;
-          });
-
-          if (modified) {
-            fs.writeFileSync(absoluteIniPath, updatedLines.join("\n"), "utf-8");
-          }
-        }
-
-        return { success: true };
-      } catch (err) {
-        console.error("SYNC MOD INI ERROR:", err);
-        return {
-          success: false,
-          error: err.message || "Unknown error",
-        };
-      }
-    }
   );
 
   ipcMain.handle(

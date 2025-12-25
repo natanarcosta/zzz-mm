@@ -4,6 +4,7 @@ const { registerImageIpc } = require("./image.ipc");
 const { registerConfigIpc } = require("./config.ipc");
 const { registerSystemHandlers } = require("./system.handlers");
 const { registerSymlinkIpc } = require("./symlink.ipc");
+const { registerSyncIniHandlers } = require("./sync-ini.handlers");
 
 function registerIpcHandlers(ipcMain, services, app) {
   registerModHandlers(ipcMain, services);
@@ -16,6 +17,7 @@ function registerIpcHandlers(ipcMain, services, app) {
     dialog: require("electron").dialog,
   });
   registerSymlinkIpc(ipcMain);
+  registerSyncIniHandlers(ipcMain, services);
 }
 
 module.exports = { registerIpcHandlers };
