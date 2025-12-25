@@ -2,7 +2,6 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const url = require("url");
 const path = require("path");
 const fs = require("fs");
-const https = require("https");
 
 const { sanitizeFileName, sanitizeFolderName } =
   require("./utils/sanitize").default;
@@ -78,52 +77,12 @@ function createWindow() {
     scanKeysForMod,
     installMod: installer.installMod,
     extractModUpdate: installer.extractModUpdate,
-  });
-
-  ipcMain.handle("load-image", async (_, filePath) => {
-    try {
-      const buffer = fs.readFileSync(filePath);
-      return `data:image/png;base64,${buffer.toString("base64")}`;
-    } catch (err) {
-      console.error("LOAD_IMAGE_ERROR: ", err);
-      throw err;
-    }
+    sanitizeFileName,
   });
 
   ipcMain.handle("open-external-url", async (_, url) => {
     await shell.openExternal(url);
   });
-
-  ipcMain.handle(
-    "download-image",
-    async (_, { url, fileName, downloadPath }) => {
-      const safeFileName = sanitizeFileName(fileName);
-      const localDiskPath = path.join(downloadPath, safeFileName);
-
-      return new Promise((resolve, reject) => {
-        const file = fs.createWriteStream(localDiskPath);
-
-        https
-          .get(url, (response) => {
-            if (response.statusCode !== 200) {
-              reject(`Erro HTTP: ${response.statusCode}`);
-              return;
-            }
-
-            response.pipe(file);
-
-            file.on("finish", () => {
-              file.close();
-              resolve(localDiskPath);
-            });
-          })
-          .on("error", (err) => {
-            fs.unlink(localDiskPath, () => {});
-            reject(err.message);
-          });
-      });
-    }
-  );
 
   const CONFIG_PATH = path.join(app.getPath("userData"), "config.json");
 
