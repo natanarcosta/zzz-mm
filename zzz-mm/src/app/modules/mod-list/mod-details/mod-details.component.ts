@@ -15,7 +15,7 @@ import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
-import { AgentMod, ZZZAgent } from '../../../models/agent.model';
+import { AgentMod, ZZZAgent, ModJson } from '../../../models/agent.model';
 import {
   ElectronAPI,
   ElectronBridgeService,
@@ -371,6 +371,10 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   }
 
   public handleUpdateExistindMod() {
+    if (this.mod()?.json?.active) {
+      this._notify.error('Disable the mod before updating!');
+      return;
+    }
     this._dialog
       .open(AddModComponent, {
         width: '40vw',

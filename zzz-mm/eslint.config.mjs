@@ -6,7 +6,7 @@ export default [
   // MAIN / PRELOAD (Electron)
   // ============================
   {
-    files: ["main.js", "preload.js", "electron/**/*.js"],
+    files: ["main.js", "preload.js", "electron/**/*.js", "utils/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "commonjs",

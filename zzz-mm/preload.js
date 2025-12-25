@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {

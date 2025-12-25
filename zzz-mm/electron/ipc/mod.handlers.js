@@ -1,5 +1,5 @@
 function registerModHandlers(ipcMain, services) {
-  const { scanKeysForMod } = services;
+  const { scanKeysForMod, extractModUpdate, installMod } = services;
 
   ipcMain.handle("scan-mod-keys", async (_, payload) => {
     try {
@@ -8,6 +8,12 @@ function registerModHandlers(ipcMain, services) {
     } catch (err) {
       return { success: false, error: err.message };
     }
+  });
+
+  ipcMain.handle("install-mod", (_, payload) => installMod(payload));
+
+  ipcMain.handle("extract-mod-update", async (_, payload) => {
+    extractModUpdate(payload);
   });
 }
 

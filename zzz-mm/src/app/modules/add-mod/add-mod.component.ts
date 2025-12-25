@@ -294,11 +294,11 @@ export class AddModComponent implements OnInit, OnDestroy {
       .pipe(finalize(() => (this.isInstalling = false)))
       .subscribe({
         next: (result) => {
-          if (result.success) {
+          if (result?.success) {
             this._notify.success('Mod atualizado com sucesso');
             this._dialogRef.close(true);
           } else {
-            this._notify.error('Falha no update: ' + result.error);
+            this._notify.error('Falha no update: ' + result?.error);
           }
         },
       });

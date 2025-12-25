@@ -133,6 +133,8 @@ export class ModListComponent implements OnInit, OnDestroy {
     this._dialog
       .open(AddModComponent, {
         width: '40vw',
+        hasBackdrop: true,
+        disableClose: true,
         data: {
           selectedAgent: this.selectedAgent(),
           mode: 'install',
