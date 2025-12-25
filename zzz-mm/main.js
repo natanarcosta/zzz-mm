@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const url = require("url");
 const path = require("path");
 const fs = require("fs");
@@ -84,10 +84,6 @@ function createWindow() {
     app
   );
 
-  ipcMain.handle("open-external-url", async (_, url) => {
-    await shell.openExternal(url);
-  });
-
   ipcMain.handle("create-symlink", async (_, { target, linkPath }) => {
     try {
       // Garante que a pasta pai do link exista
@@ -134,39 +130,6 @@ function createWindow() {
       return { success: true };
     } catch (err) {
       console.error("REMOVE_SYMLINK_ERROR:", err);
-      return { success: false, error: err.message };
-    }
-  });
-
-  ipcMain.handle("select-directory", async (event, options) => {
-    const result = await dialog.showOpenDialog(
-      BrowserWindow.getFocusedWindow(),
-      {
-        properties: ["openDirectory"], // This property enables folder selection
-        ...options,
-      }
-    );
-
-    if (result.canceled) {
-      return null; // or handle cancellation as needed
-    } else {
-      // result.filePaths is an array of selected paths
-      return result.filePaths[0]; // Return the first selected path
-    }
-  });
-
-  ipcMain.handle("open-mod-folder", async (_, { modsRoot, folderName }) => {
-    try {
-      const fullPath = path.join(modsRoot, folderName);
-
-      if (!fs.existsSync(fullPath)) {
-        return { success: false, error: "Mod folder not found" };
-      }
-
-      await shell.openPath(fullPath);
-
-      return { success: true };
-    } catch (err) {
       return { success: false, error: err.message };
     }
   });
@@ -343,14 +306,6 @@ function createWindow() {
       }
     }
   );
-
-  ipcMain.handle("app-quit", () => {
-    app.quit();
-  });
-
-  ipcMain.handle("get-app-version", () => {
-    return app.getVersion();
-  });
 }
 app.on("ready", createWindow);
 app.on("window-all-closed", function () {
