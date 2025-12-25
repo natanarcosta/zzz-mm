@@ -96,6 +96,8 @@ export class ModListComponent implements OnInit, OnDestroy {
     this._dialog.open(ConfigDialogComponent, {
       width: '40vw',
       height: '100%',
+      hasBackdrop: true,
+      disableClose: true,
       position: {
         right: '0',
         top: '0',
