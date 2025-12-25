@@ -21,8 +21,11 @@ import { MatInputModule } from '@angular/material/input';
 import { ModManagerService } from '../../services/mod-manager.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+
 import { Subject, takeUntil } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ElectronBridgeService } from '../../services/electron-bridge.service';
 
 @Component({
   selector: 'app-config-dialog',
@@ -40,6 +43,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatProgressBarModule,
     MatSelectModule,
     MatTooltipModule,
+    MatSlideToggleModule,
   ],
 })
 export class ConfigDialogComponent implements OnInit, OnDestroy {
@@ -49,8 +53,10 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
   private _cdr = inject(ChangeDetectorRef);
   private _modManagerService = inject(ModManagerService);
   private _onDestroy = new Subject<void>();
+  private _electronBridge = inject(ElectronBridgeService);
 
   public symLinkSyncProgress = signal(0);
+  public appVersion = signal<string | null>(null);
 
   public configsForm = new FormGroup({
     blur: new FormControl(),
@@ -83,6 +89,10 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
         });
         this._cdr.markForCheck();
       },
+    });
+
+    this._electronBridge.getAppVersion().subscribe({
+      next: (value) => this.appVersion.set(value),
     });
   }
 

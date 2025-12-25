@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ConfigService } from './services/config.service';
 import { ModManagerWrapperComponent } from './modules/mod-manager-wrapper/mod-manager-wrapper.component';
+import { ElectronBridgeService } from './services/electron-bridge.service';
 
 @Component({
   selector: 'app-root',
@@ -12,5 +12,9 @@ import { ModManagerWrapperComponent } from './modules/mod-manager-wrapper/mod-ma
 })
 export class AppComponent {
   title = 'zzz-mm';
-  configService = inject(ConfigService);
+  private _electronBridge = inject(ElectronBridgeService);
+
+  handleCloseApp() {
+    this._electronBridge.quitApp();
+  }
 }

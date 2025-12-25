@@ -41,6 +41,8 @@ export interface ElectronAPI {
     d3dxUserIniPath: string;
     modsRoot: string;
   }): Promise<{ success: boolean; error?: string }>;
+  quitApp(): void;
+  getAppVersion: () => Promise<string>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -136,5 +138,13 @@ export class ElectronBridgeService {
         modsRoot,
       })
     );
+  }
+
+  quitApp(): void {
+    return this._api()!.quitApp();
+  }
+
+  getAppVersion(): Observable<string> {
+    return this.call(() => this.api!.getAppVersion());
   }
 }

@@ -33,6 +33,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       d3dxUserIniPath,
       modsRoot
     ),
+  quitApp: () => ipcRenderer.invoke("app-quit"),
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

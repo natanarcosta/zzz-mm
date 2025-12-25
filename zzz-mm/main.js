@@ -817,6 +817,14 @@ function createWindow() {
       }
     }
   );
+
+  ipcMain.handle("app-quit", () => {
+    app.quit();
+  });
+
+  ipcMain.handle("get-app-version", () => {
+    return app.getVersion();
+  });
 }
 app.on("ready", createWindow);
 app.on("window-all-closed", function () {

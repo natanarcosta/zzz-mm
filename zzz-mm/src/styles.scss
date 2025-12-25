@@ -17,7 +17,7 @@
   display: flex;
   background-color: var(--base-background);
   color: #ffffff;
-  height: 100dvh;
+  height: calc(100dvh - 40px);
   font-family: "din-medium", roboto !important;
   h1 {
     font-family: "din-medium", roboto !important;
