@@ -1,9 +1,9 @@
 const { registerModHandlers } = require("./mod.handlers");
-const { registerFsIpc } = require("./fs.ipc");
-const { registerImageIpc } = require("./image.ipc");
-const { registerConfigIpc } = require("./config.ipc");
+const { registerFsIpc } = require("./fs.handlers");
+const { registerImageIpc } = require("./image.handlers");
+const { registerConfigIpc } = require("./config.handlers");
 const { registerSystemHandlers } = require("./system.handlers");
-const { registerSymlinkIpc } = require("./symlink.ipc");
+const { registerSymlinkIpc } = require("./symlink.handlers");
 const { registerSyncIniHandlers } = require("./sync-ini.handlers");
 
 function registerIpcHandlers(ipcMain, services, app) {

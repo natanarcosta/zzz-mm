@@ -12,6 +12,7 @@ export default [
       "electron/**/*.js",
       "utils/**/*.js",
       "shared/**/*.js",
+      "webpack.config.js",
     ],
     languageOptions: {
       ecmaVersion: "latest",

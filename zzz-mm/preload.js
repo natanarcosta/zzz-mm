@@ -1,42 +1,53 @@
 /* eslint-disable no-undef */
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
+const { IpcHandler } = require("./shared/ipc.channels");
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  readFolder: (folderPath) => ipcRenderer.invoke("read-folder", folderPath),
-  readJsonfile: (path) => ipcRenderer.invoke("read-json-file", path),
-  loadImage: (path) => ipcRenderer.invoke("load-image", path),
-  openExternalUrl: (url) => ipcRenderer.invoke("open-external-url", url),
+  readFolder: (folderPath) =>
+    ipcRenderer.invoke(IpcHandler.READ_FOLDER, folderPath),
+  readJsonfile: (path) => ipcRenderer.invoke(IpcHandler.READ_JSON_FILE, path),
+  loadImage: (path) => ipcRenderer.invoke(IpcHandler.LOAD_IMAGE, path),
+  openExternalUrl: (url) =>
+    ipcRenderer.invoke(IpcHandler.OPEN_EXTERNAL_URL, url),
   downloadImage: (url, fileName, downloadPath) =>
-    ipcRenderer.invoke("download-image", { url, fileName, downloadPath }),
+    ipcRenderer.invoke(IpcHandler.DOWNLOAD_IMAGE, {
+      url,
+      fileName,
+      downloadPath,
+    }),
   writeJsonFile: (filePath, data) =>
-    ipcRenderer.invoke("write-json-file", { filePath, data }),
-  loadConfig: () => ipcRenderer.invoke("load-config"),
-  saveConfig: (data) => ipcRenderer.invoke("save-config", data),
+    ipcRenderer.invoke(IpcHandler.WRITE_JSON_FILE, { filePath, data }),
+  loadConfig: () => ipcRenderer.invoke(IpcHandler.LOAD_CONFIG),
+  saveConfig: (data) => ipcRenderer.invoke(IpcHandler.SAVE_CONFIG, data),
   createSymlink: (target, linkPath) =>
-    ipcRenderer.invoke("create-symlink", { target, linkPath }),
-  removeSymlink: (linkPath) => ipcRenderer.invoke("remove-symlink", linkPath),
-  installMod: (data) => ipcRenderer.invoke("install-mod", data),
+    ipcRenderer.invoke(IpcHandler.CREATE_SYMLINK, { target, linkPath }),
+  removeSymlink: (linkPath) =>
+    ipcRenderer.invoke(IpcHandler.REMOVE_SYMLINK, linkPath),
+  installMod: (data) => ipcRenderer.invoke(IpcHandler.INSTALL_MOD, data),
   getFilePath: (file) => webUtils.getPathForFile(file),
-  selectDirectory: (options) => ipcRenderer.invoke("select-directory", options),
+  selectDirectory: (options) =>
+    ipcRenderer.invoke(IpcHandler.SELECT_DIRECTORY, options),
   extractModForUpdate: (zipPath, targetFolder, baseModsDir) =>
-    ipcRenderer.invoke("extract-mod-update", {
+    ipcRenderer.invoke(IpcHandler.EXTRACT_MOD_UPDATE, {
       zipPath,
       targetFolder,
       baseModsDir,
     }),
   scanModKeys: (modsRoot, folderName) =>
-    ipcRenderer.invoke("scan-mod-keys", { modsRoot, folderName }),
-  openModFolder: (payload) => ipcRenderer.invoke("open-mod-folder", payload),
+    ipcRenderer.invoke(IpcHandler.SCAN_MOD_KEYS, { modsRoot, folderName }),
+  openModFolder: (payload) =>
+    ipcRenderer.invoke(IpcHandler.OPEN_MOD_FOLDER, payload),
   syncModIniFromUser: (modFolderName, d3dxUserIniPath, modsRoot) =>
     ipcRenderer.invoke(
-      "sync-mod-ini-from-d3dx",
+      IpcHandler.SYNC_MOD_INI_FROM_D3DX,
       modFolderName,
       d3dxUserIniPath,
       modsRoot
     ),
-  quitApp: () => ipcRenderer.invoke("app-quit"),
-  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
-  saveModPreview: (payload) => ipcRenderer.invoke("save-mod-preview", payload),
+  quitApp: () => ipcRenderer.invoke(IpcHandler.APP_QUIT),
+  getAppVersion: () => ipcRenderer.invoke(IpcHandler.GET_APP_VERSION),
+  saveModPreview: (payload) =>
+    ipcRenderer.invoke(IpcHandler.SAVE_MOD_PREVIEW, payload),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

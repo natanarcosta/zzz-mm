@@ -32,7 +32,7 @@ function createWindow() {
     frame: false,
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "dist/preload.bundle.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },

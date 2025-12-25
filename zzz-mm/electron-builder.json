@@ -7,10 +7,15 @@
     "dist/browser/**/*",
     "main.js",
     "preload.js",
+    "dist/preload.bundle.js",
     "package.json",
     "!**/locales/**",
     "!**/*.map",
-    "!**/*.ts"
+    "!**/*.ts",
+    "electron/**/*",
+    "utils/**/*",
+    "shared/**/*",
+    "constants/**/*"
   ],
 
   "extraResources": [

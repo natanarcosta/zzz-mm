@@ -11,10 +11,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:zzz-mm": "node dist/zzz-mm/server/server.mjs",
-    "electron:dev": "concurrently \"ng serve --watch\" \"electron .\"",
-    "electron:dist": "rimraf dist && npm run build && electron-builder",
-    "porcaria": "",
-    "electron:start": "concurrently \"ng build --watch\" \"electron .\""
+    "electron:dev": "concurrently \"webpack --watch\" \"ng serve\" \"electron .\"",
+    "electron:dist": "rimraf dist && cross-env NODE_ENV=production webpack && ng build --configuration production && electron-builder"
   },
   "private": true,
   "dependencies": {
@@ -57,6 +55,9 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.4.2",
-    "typescript-eslint": "^8.50.1"
+    "typescript-eslint": "^8.50.1",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1",
+    "cross-env": "^10.1.0"
   }
 }

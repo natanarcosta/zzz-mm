@@ -17,7 +17,7 @@ const IpcHandler = {
   // =====================
   LOAD_IMAGE: "load-image",
   SAVE_MOD_PREVIEW: "save-mod-preview",
-  DOWNLOAD_IMAGE: "download_image",
+  DOWNLOAD_IMAGE: "download-image",
 
   // =====================
   // MODS
