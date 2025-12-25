@@ -1,10 +1,11 @@
 const fs = require("fs");
 const path = require("path");
+const { IpcHandler } = require("../../shared/ipc.channels");
 
 function registerConfigIpc(ipcMain, app) {
   const CONFIG_PATH = path.join(app.getPath("userData"), "config.json");
 
-  ipcMain.handle("load-config", async () => {
+  ipcMain.handle(IpcHandler.LOAD_CONFIG, async () => {
     if (!fs.existsSync(CONFIG_PATH)) {
       const defaultConfig = {
         source_mods_folder: "",
@@ -28,7 +29,7 @@ function registerConfigIpc(ipcMain, app) {
     return JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8"));
   });
 
-  ipcMain.handle("save-config", async (_, data) => {
+  ipcMain.handle(IpcHandler.SAVE_CONFIG, async (_, data) => {
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 2), "utf-8");
     return { success: true };
   });

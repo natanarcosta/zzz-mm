@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { AppConfigs } from './config.service';
-import { Observable, throwError, from, of } from 'rxjs';
+import { Observable, throwError, from } from 'rxjs';
 import { ModHotkey } from '../models/agent.model';
 
 export interface ElectronAPI {

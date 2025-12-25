@@ -1,9 +1,10 @@
 // electron/ipc/symlink.ipc.js
 const fs = require("fs");
 const path = require("path");
+const { IpcHandler } = require("../../shared/ipc.channels");
 
 function registerSymlinkIpc(ipcMain) {
-  ipcMain.handle("create-symlink", async (_, { target, linkPath }) => {
+  ipcMain.handle(IpcHandler.CREATE_SYMLINK, async (_, { target, linkPath }) => {
     try {
       // Garante que a pasta pai do link exista
       fs.mkdirSync(path.dirname(linkPath), { recursive: true });
@@ -25,7 +26,7 @@ function registerSymlinkIpc(ipcMain) {
     }
   });
 
-  ipcMain.handle("remove-symlink", async (_, linkPath) => {
+  ipcMain.handle(IpcHandler.REMOVE_SYMLINK, async (_, linkPath) => {
     try {
       if (!fs.existsSync(linkPath)) {
         return { success: true }; // já não existe

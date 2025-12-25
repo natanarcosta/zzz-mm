@@ -1,8 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const { IpcHandler } = require("../../shared/ipc.channels");
 
 function registerFsIpc(ipcMain) {
-  ipcMain.handle("read-folder", async (_, folderPath) => {
+  ipcMain.handle(IpcHandler.READ_FOLDER, async (_, folderPath) => {
     try {
       const files = await fs.promises.readdir(folderPath);
       return files;
@@ -12,7 +13,7 @@ function registerFsIpc(ipcMain) {
     }
   });
 
-  ipcMain.handle("read-json-file", async (_, filePath) => {
+  ipcMain.handle(IpcHandler.READ_JSON_FILE, async (_, filePath) => {
     try {
       const content = await fs.promises.readFile(filePath, "utf-8");
       return JSON.parse(content);
@@ -22,7 +23,7 @@ function registerFsIpc(ipcMain) {
     }
   });
 
-  ipcMain.handle("write-json-file", async (_, { filePath, data }) => {
+  ipcMain.handle(IpcHandler.WRITE_JSON_FILE, async (_, { filePath, data }) => {
     try {
       const finalPath = filePath.endsWith(".json")
         ? filePath

@@ -1,9 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const https = require("https");
+const { IpcHandler } = require("../../shared/ipc.channels");
 
 function registerImageIpc(ipcMain, { sanitizeFileName }) {
-  ipcMain.handle("load-image", async (_, filePath) => {
+  ipcMain.handle(IpcHandler.LOAD_IMAGE, async (_, filePath) => {
     try {
       const buffer = fs.readFileSync(filePath);
       return `data:image/png;base64,${buffer.toString("base64")}`;
@@ -14,7 +15,7 @@ function registerImageIpc(ipcMain, { sanitizeFileName }) {
   });
 
   ipcMain.handle(
-    "download-image",
+    IpcHandler.DOWNLOAD_IMAGE,
     async (_, { url, fileName, downloadPath }) => {
       const safeFileName = sanitizeFileName(fileName);
       const localDiskPath = path.join(downloadPath, safeFileName);

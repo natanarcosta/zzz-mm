@@ -1,21 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const url = require("url");
 const path = require("path");
+const { registerIpcHandlers } = require("./electron/ipc");
+const Services = require("./electron/services");
 
 const { sanitizeFileName, sanitizeFolderName } =
   require("./utils/sanitize").default;
-const { scanKeysForMod } = require("./electron/services/key-scan.service");
-const {
-  createModInstaller,
-} = require("./electron/services/mod-install.service");
-
-const { registerIpcHandlers } = require("./electron/ipc");
-const { syncIniFromD3dx } = require("./electron/services/sync-ini.service");
-
-var nodeConsole = require("console");
-const { saveModPreview } = require("./electron/services/preview.service");
-// eslint-disable-next-line no-unused-vars
-var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
 
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION:", err);
@@ -68,21 +58,21 @@ function createWindow() {
     mainWindow = null;
   });
 
-  const installer = createModInstaller({
+  const installer = Services.createModInstaller({
     isDev,
     sanitizeFolderName,
-    scanKeysForMod,
+    scanKeysForMod: Services.scanKeysForMod,
   });
 
   registerIpcHandlers(
     ipcMain,
     {
-      scanKeysForMod,
+      scanKeysForMod: Services.scanKeysForMod,
       installMod: installer.installMod,
       extractModUpdate: installer.extractModUpdate,
       sanitizeFileName,
-      syncIniFromD3dx,
-      saveModPreview,
+      syncIniFromD3dx: Services.syncIniFromD3dx,
+      saveModPreview: Services.saveModPreview,
     },
     app
   );
