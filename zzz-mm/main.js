@@ -1,7 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const url = require("url");
 const path = require("path");
-const fs = require("fs");
 
 const { sanitizeFileName, sanitizeFolderName } =
   require("./utils/sanitize").default;
@@ -14,6 +13,7 @@ const { registerIpcHandlers } = require("./electron/ipc");
 const { syncIniFromD3dx } = require("./electron/services/sync-ini.service");
 
 var nodeConsole = require("console");
+const { saveModPreview } = require("./electron/services/preview.service");
 // eslint-disable-next-line no-unused-vars
 var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
 
@@ -82,37 +82,9 @@ function createWindow() {
       extractModUpdate: installer.extractModUpdate,
       sanitizeFileName,
       syncIniFromD3dx,
+      saveModPreview,
     },
     app
-  );
-
-  ipcMain.handle(
-    "save-mod-preview",
-    async (_, { sourcePath, modFolderPath }) => {
-      try {
-        if (!sourcePath || !modFolderPath) {
-          return { success: false, error: "Invalid payload" };
-        }
-
-        if (!fs.existsSync(sourcePath)) {
-          return { success: false, error: "Source file not found" };
-        }
-
-        const ext = path.extname(sourcePath).toLowerCase();
-        if (![".png", ".jpg", ".jpeg"].includes(ext)) {
-          return { success: false, error: "Invalid image format" };
-        }
-
-        const targetPath = path.join(modFolderPath, "preview.jpg");
-
-        fs.copyFileSync(sourcePath, targetPath);
-
-        return { success: true, previewPath: targetPath };
-      } catch (err) {
-        console.error("SAVE MOD PREVIEW ERROR:", err);
-        return { success: false, error: err.message };
-      }
-    }
   );
 }
 app.on("ready", createWindow);
