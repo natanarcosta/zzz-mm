@@ -3,6 +3,7 @@ const { registerFsIpc } = require("./fs.ipc");
 const { registerImageIpc } = require("./image.ipc");
 const { registerConfigIpc } = require("./config.ipc");
 const { registerSystemHandlers } = require("./system.handlers");
+const { registerSymlinkIpc } = require("./symlink.ipc");
 
 function registerIpcHandlers(ipcMain, services, app) {
   registerModHandlers(ipcMain, services);
@@ -14,6 +15,7 @@ function registerIpcHandlers(ipcMain, services, app) {
     shell: require("electron").shell,
     dialog: require("electron").dialog,
   });
+  registerSymlinkIpc(ipcMain);
 }
 
 module.exports = { registerIpcHandlers };
