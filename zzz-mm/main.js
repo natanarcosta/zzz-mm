@@ -7,7 +7,13 @@ const AdmZip = require("adm-zip");
 const { unrar } = require("unrar-promise");
 const os = require("os");
 
+const { sanitizeFileName, sanitizeFolderName } =
+  require("./utils/sanitize").default;
+const { scanKeysForMod } = require("./electron/services/key-scan.service");
+const { registerIpcHandlers } = require("./electron/ipc");
+
 var nodeConsole = require("console");
+// eslint-disable-next-line no-unused-vars
 var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
 
 process.on("uncaughtException", (err) => {
@@ -20,7 +26,9 @@ process.on("unhandledRejection", (reason) => {
 
 try {
   require("electron-reloader")(module);
-} catch {}
+} catch {
+  /* empty */
+}
 
 let mainWindow;
 const isDev = !app.isPackaged;
@@ -59,24 +67,8 @@ function createWindow() {
     mainWindow = null;
   });
 
-  ipcMain.handle("read-folder", async (event, folderPath) => {
-    try {
-      const files = await fs.promises.readdir(folderPath);
-      return files;
-    } catch (err) {
-      console.error("read-folder FAILED: ", err);
-      throw err;
-    }
-  });
-
-  ipcMain.handle("read-json-file", async (_, filePath) => {
-    try {
-      const content = await fs.promises.readFile(filePath, "utf-8");
-      return JSON.parse(content);
-    } catch (err) {
-      console.error("READ_JSON_FILE_ERROR: ", err);
-      throw err;
-    }
+  registerIpcHandlers(ipcMain, {
+    scanKeysForMod,
   });
 
   ipcMain.handle("load-image", async (_, filePath) => {
@@ -123,23 +115,6 @@ function createWindow() {
       });
     }
   );
-
-  ipcMain.handle("write-json-file", async (_, { filePath, data }) => {
-    try {
-      const finalPath = filePath.endsWith(".json")
-        ? filePath
-        : `${filePath}.json`;
-
-      fs.mkdirSync(path.dirname(finalPath), { recursive: true });
-
-      // 🧾 escreve JSON formatado
-      fs.writeFileSync(finalPath, JSON.stringify(data, null, 2), "utf-8");
-
-      return { success: true, path: finalPath };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
 
   const CONFIG_PATH = path.join(app.getPath("userData"), "config.json");
 
@@ -239,27 +214,6 @@ function createWindow() {
     }
   }
 
-  function getRootFolder(tempDir) {
-    const entries = fs.readdirSync(tempDir);
-
-    if (entries.length === 1) {
-      const fullPath = path.join(tempDir, entries[0]);
-      if (fs.statSync(fullPath).isDirectory()) {
-        return {
-          path: fullPath,
-          name: entries[0],
-          isWrapped: true,
-        };
-      }
-    }
-
-    return {
-      path: tempDir,
-      name: null,
-      isWrapped: false,
-    };
-  }
-
   function unwrapSingleFolder(dir) {
     let current = dir;
 
@@ -291,79 +245,6 @@ function createWindow() {
         await fs.promises.copyFile(srcPath, destPath);
       }
     }
-  }
-
-  function sanitizeFileName(name) {
-    if (!name || typeof name !== "string") return "file";
-
-    let sanitized = name
-      .replace(/[\/\\?%*:|"<>]/g, "_") // proibidos
-      .replace(/[\u0000-\u001F]/g, "") // controle
-      .trim();
-
-    // evita nomes vazios ou inválidos
-    if (!sanitized || sanitized === "." || sanitized === "..") {
-      sanitized = "file";
-    }
-
-    // Windows não gosta de nomes terminando com ponto ou espaço
-    sanitized = sanitized.replace(/[\. ]+$/, "");
-
-    // limite seguro
-    if (sanitized.length > 120) {
-      const ext = path.extname(sanitized);
-      sanitized = sanitized.slice(0, 120 - ext.length) + ext;
-    }
-
-    return sanitized;
-  }
-
-  function sanitizeFolderName(name) {
-    if (!name || typeof name !== "string") return "mod";
-
-    // remove caracteres proibidos no Windows
-    let sanitized = name
-      .replace(/[\/\\?%*:|"<>]/g, "-") // separadores e proibidos
-      .replace(/[\u0000-\u001F]/g, "") // caracteres de controle
-      .replace(/\s+/g, " ") // normaliza espaços
-      .trim();
-
-    // fallback absoluto
-    if (!sanitized) {
-      return "mod";
-    }
-
-    // limite seguro de tamanho
-    if (sanitized.length > 80) {
-      sanitized = sanitized.slice(0, 80);
-    }
-
-    return sanitized;
-  }
-
-  function scanKeysForMod(modsRoot, folderName) {
-    const modPath = path.join(modsRoot, folderName);
-
-    if (!fs.existsSync(modPath)) {
-      throw new Error("Mod folder not found");
-    }
-
-    const iniFiles = findIniFiles(modPath);
-    let hotkeys = [];
-
-    for (const ini of iniFiles) {
-      const content = fs.readFileSync(ini, "utf-8");
-      const blocks = splitIniBlocks(content);
-
-      for (const block of blocks) {
-        if (!isKeySwapBlock(block.lines)) continue;
-
-        const parsed = parseKeySwapBlock(block.lines);
-        if (parsed) hotkeys.push(parsed);
-      }
-    }
-
-    return hotkeys;
   }
 
   ipcMain.handle("install-mod", async (_, data) => {
@@ -404,7 +285,7 @@ function createWindow() {
         try {
           const previewPath = path.join(finalPath, "preview.jpg");
 
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve, _reject) => {
             const file = fs.createWriteStream(previewPath);
 
             https
@@ -530,147 +411,6 @@ function createWindow() {
       }
     }
   );
-
-  const VK_MAP = {
-    VK_UP: "UP",
-    VK_DOWN: "DOWN",
-    VK_LEFT: "LEFT",
-    VK_RIGHT: "RIGHT",
-
-    VK_NUMPAD0: "NUM0",
-    VK_NUMPAD1: "NUM1",
-    VK_NUMPAD2: "NUM2",
-    VK_NUMPAD3: "NUM3",
-
-    VK_F1: "F1",
-    VK_F2: "F2",
-    VK_F3: "F3",
-
-    VK_HOME: "HOME",
-    VK_END: "END",
-  };
-
-  function findIniFiles(dir, result = []) {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-
-      if (entry.isDirectory()) {
-        findIniFiles(fullPath, result);
-      } else if (
-        entry.isFile() &&
-        entry.name.toLowerCase().endsWith(".ini") &&
-        !["d3dx.ini", "dxgi.ini"].includes(entry.name.toLowerCase())
-      ) {
-        result.push(fullPath);
-      }
-    }
-
-    return result;
-  }
-
-  function extractLabel(lines) {
-    for (const line of lines) {
-      const match = line.match(/^\$(\w+)\s*=/);
-      if (!match) continue;
-
-      const label = match[1];
-
-      if (label.toLowerCase() === "active") continue;
-
-      // tratar swapkey genérico
-      if (/^swapkey\d+$/i.test(label)) {
-        const index = label.match(/\d+/)?.[0];
-        return `KeySwap${index ? ` #${index}` : ""}`;
-      }
-
-      return label;
-    }
-
-    return "KeySwap";
-  }
-
-  function normalizeKey(raw) {
-    const tokens = raw
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((t) => !t.startsWith("no_"));
-
-    const parts = [];
-
-    if (tokens.includes("ctrl")) parts.push("CTRL");
-    if (tokens.includes("shift")) parts.push("SHIFT");
-    if (tokens.includes("alt")) parts.push("ALT");
-
-    const vk = tokens.find((t) => t.startsWith("vk_"));
-    if (vk) {
-      parts.push(
-        VK_MAP[vk.toUpperCase()] ?? vk.replace("vk_", "").toUpperCase()
-      );
-    }
-
-    return parts.join(" ");
-  }
-
-  function parseKeySwapBlock(blockLines) {
-    const keyLine = blockLines.find((l) => l.toLowerCase().startsWith("key"));
-    if (!keyLine) return null;
-
-    const rawKey = keyLine.split("=")[1].trim();
-    const label = extractLabel(blockLines);
-
-    return {
-      description: label,
-      key: normalizeKey(rawKey),
-      source: "ini",
-    };
-  }
-
-  function splitIniBlocks(content) {
-    const blocks = [];
-    let current = null;
-
-    const lines = content.split(/\r?\n/);
-
-    for (const line of lines) {
-      const headerMatch = line.match(/^\[(.+?)\]$/);
-
-      if (headerMatch) {
-        if (current) blocks.push(current);
-
-        current = {
-          name: headerMatch[1],
-          lines: [],
-        };
-      } else if (current) {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith(";")) {
-          current.lines.push(trimmed);
-        }
-      }
-    }
-
-    if (current) blocks.push(current);
-
-    return blocks;
-  }
-
-  function isKeySwapBlock(lines) {
-    return (
-      lines.some((l) => l.trim().startsWith("key")) &&
-      lines.some((l) => l.trim().startsWith("$"))
-    );
-  }
-
-  ipcMain.handle("scan-mod-keys", async (_, { modsRoot, folderName }) => {
-    try {
-      const hotkeys = scanKeysForMod(modsRoot, folderName);
-      return { success: true, hotkeys };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
 
   ipcMain.handle("open-mod-folder", async (_, { modsRoot, folderName }) => {
     try {
@@ -806,7 +546,7 @@ function createWindow() {
 
             const varName = varMatch[2];
 
-            if (valuesToApply.hasOwnProperty(varName)) {
+            if (Object.prototype.hasOwnProperty.call(valuesToApply, varName)) {
               modified = true;
 
               const prefix = varMatch[1] ?? "";
