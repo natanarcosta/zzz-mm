@@ -48,6 +48,7 @@ import { AddModComponent } from '../../add-mod/add-mod.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AgentNamePipe } from '../../../shared/agent-name.pipe';
 import { MatIconModule } from '@angular/material/icon';
+import { ModIndexService } from '../../../services/mod-index.service';
 
 @Component({
   selector: 'app-mod-details',
@@ -73,14 +74,16 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   private _ref = inject(MatDialogRef<ModDetailsComponent>);
   private _electronBridge = inject(ElectronBridgeService);
   private _gBananaService = inject(GameBananaService);
-  private _cdr = inject(ChangeDetectorRef);
   private _configService = inject(ConfigService);
+  private _modIndexService = inject(ModIndexService);
   private _mainService = inject(MainService);
   private _notify = inject(NotificationService);
   private _modManagerService = inject(ModManagerService);
+
   private _data: { mod: AgentMod } = inject(MAT_DIALOG_DATA);
   private _onDestroy$ = new Subject<void>();
   private _dialog = inject(MatDialog);
+  private _cdr = inject(ChangeDetectorRef);
 
   public mod = signal<AgentMod | null>(null);
   public hasGbananaImage = signal<boolean>(false);
@@ -93,7 +96,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   });
   public filteredAgents$!: Observable<ZZZAgent[]>;
   public agents!: ZZZAgent[];
-  public selectedAgent!: ZZZAgent;
+  public selectedAgent = signal<ZZZAgent | null>(null);
   public hasUpdate = signal(false);
   public availableUpdate = signal<Date | null>(null);
   public isRefreshing = signal(false);
@@ -125,6 +128,13 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     return '';
   });
 
+  agentMods = computed(() => {
+    const agent = this.selectedAgent();
+    if (!agent) return;
+
+    return this._modIndexService.modsByAgent().get(agent.name);
+  });
+
   ngOnDestroy(): void {
     this._onDestroy$.next();
     this._onDestroy$.complete();
@@ -148,7 +158,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           if (!data) return;
-          this.selectedAgent = data;
+          this.selectedAgent.set(data);
         },
       });
 
@@ -169,7 +179,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
 
     this.form.patchValue({
       modName: mod.json?.modName,
-      character: this.selectedAgent,
+      character: this.selectedAgent(),
       description: mod.json?.description,
       url: mod.json?.url,
     });
@@ -262,7 +272,6 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
           if (!mod || !mod.json || !data.updatedAt) return;
 
           const remoteUpdatedAt = data.updatedAt.toISOString();
-          const januaryFirst = 1735700400000;
 
           const localUpdatedAt =
             mod.json.localUpdatedAt ??
@@ -351,12 +360,12 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       );
       if (!selectedAgent) return;
 
-      const modIndex = selectedAgent.mods?.findIndex(
+      const modIndex = this.agentMods()?.findIndex(
         (_mod) => _mod.folderName === mod.folderName,
       );
       if (modIndex && modIndex < 0) return;
 
-      const toDisable = selectedAgent.mods?.filter((_, i) => i !== modIndex);
+      const toDisable = this.agentMods()?.filter((_, i) => i !== modIndex);
       if (!toDisable?.length) return;
 
       for (const disableMod of toDisable) {
@@ -389,21 +398,15 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       .afterClosed()
       .subscribe({
         next: (value: boolean) => {
-          if (value) this._configService.refreshMods();
+          if (value) this._modIndexService.refresh();
         },
       });
   }
 
-  public handleRefreshMods() {
+  public async handleRefreshMods() {
     this.isRefreshing.set(true);
-    this._configService
-      .refreshMods()
-      .pipe(
-        finalize(() => {
-          this.isRefreshing.set(false);
-        }),
-      )
-      .subscribe();
+    await this._modIndexService.refresh();
+    this.isRefreshing.set(false);
   }
 
   public scanKeys() {
@@ -527,7 +530,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
             ...mod,
             previewPath: res.previewPath,
           });
-          this._configService.deleteByFolder(mod.folderName);
+          this._modIndexService.invalidate(mod.folderName);
           this._notify.success('Preview image saved');
           this.file = null;
           this.filePath = null;

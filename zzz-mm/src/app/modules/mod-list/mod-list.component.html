@@ -41,16 +41,16 @@
   @if (selectedAgent()) {
     <h1>
       {{ selectedAgent()!.name | agentName }} mods
-      <span class="count">{{ selectedAgent()?.mods?.length }}</span>
+      <span class="count">{{ selectedAgentMods()?.length }}</span>
     </h1>
     <section class="list-wrapper">
-      @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
-        <div class="mod-card" [ngClass]="{ active: agentMod.json?.active }">
+      @for (mod of selectedAgentMods(); track mod.folderName) {
+        <div class="mod-card" [ngClass]="{ active: mod.json?.active }">
           <div class="image">
             <img
               [ngClass]="{ censor: blur() }"
               [src]="
-                agentMod.previewPath ||
+                mod.previewPath ||
                 'assets/char-portraits/' + selectedAgent()!.id + '.png'
               "
             />
@@ -59,15 +59,15 @@
             <div class="overlay">
               <button
                 class="action primary"
-                [ngClass]="{ danger: agentMod.json?.active }"
-                (click)="toggleMod(agentMod); $event.stopPropagation()"
+                [ngClass]="{ danger: mod.json?.active }"
+                (click)="toggleMod(mod); $event.stopPropagation()"
               >
-                {{ agentMod.json?.active ? "Disable" : "Activate" }}
+                {{ mod.json?.active ? "Disable" : "Activate" }}
               </button>
 
               <button
                 class="action secondary"
-                (click)="openDetailsDialog(agentMod); $event.stopPropagation()"
+                (click)="openDetailsDialog(mod); $event.stopPropagation()"
               >
                 Details
               </button>
@@ -75,7 +75,7 @@
           </div>
 
           <div class="content">
-            {{ agentMod.json?.modName || agentMod.folderName }}
+            {{ mod.json?.modName || mod.folderName }}
           </div>
         </div>
       } @empty {

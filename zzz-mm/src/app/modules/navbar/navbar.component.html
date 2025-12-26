@@ -3,18 +3,23 @@
     class="navbar-container"
     [ngClass]="{ grid: navbarStyle() === navbarTypeEnum.GRID }"
   >
-    @for (agent of agents(); let i = $index; track agent.id) {
-      @if (agent.mods?.length || noMods) {
+    @for (item of agentsWithMods(); track item.agent.id) {
+      @if (item.hasMods || !hasAnyMods()) {
         <div
           class="navbar-item"
-          (click)="handleSelectAgent(agent)"
+          (click)="handleSelectAgent(item.agent)"
           [ngClass]="{
-            selected: selectedAgent()?.name === agent.name,
-            grayscale: agent?.mods?.length === 0,
+            selected: selectedAgent()?.id === item.agent.id,
+            grayscale: !item.hasMods,
           }"
         >
-          <img [ngSrc]="'assets/char-portraits/' + agent.id + '.png'" fill />
-          <span class="agent-name">{{ agent.name | agentName }}</span>
+          <img
+            [ngSrc]="'assets/char-portraits/' + item.agent.id + '.png'"
+            fill
+          />
+          <span class="agent-name">
+            {{ item.agent.name | agentName }}
+          </span>
         </div>
       }
     }

@@ -1,7 +1,6 @@
 export interface ZZZAgent {
   name: string;
   id: number;
-  mods?: Array<AgentMod>;
 }
 
 export interface AgentMod {
@@ -32,4 +31,9 @@ export interface ModHotkey {
   description: string;
   key: string;
   source?: string;
+}
+
+export interface AgentWithMods {
+  agent: ZZZAgent;
+  mods: AgentMod[];
 }
