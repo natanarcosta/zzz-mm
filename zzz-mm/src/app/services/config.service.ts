@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { ModJson } from '../models/agent.model';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
 import { ReplaySubject } from 'rxjs';
 import { NotificationService } from './notifications.service';

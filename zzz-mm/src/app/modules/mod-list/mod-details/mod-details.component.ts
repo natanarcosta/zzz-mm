@@ -77,7 +77,6 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   private _configService = inject(ConfigService);
   private _modIndexService = inject(ModIndexService);
   private _mainService = inject(MainService);
-  private _modIndex = inject(ModIndexService);
   private _notify = inject(NotificationService);
   private _modManagerService = inject(ModManagerService);
 
@@ -133,7 +132,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const agent = this.selectedAgent();
     if (!agent) return;
 
-    return this._modIndex.modsByAgent().get(agent.name);
+    return this._modIndexService.modsByAgent().get(agent.name);
   });
 
   ngOnDestroy(): void {
@@ -261,7 +260,6 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
 
   handleGetModDataFromGBanana(): void {
     const id = this.mod()?.id;
-    console.log(id);
     if (!id) return;
 
     this.isGettingGBananaData.set(true);
