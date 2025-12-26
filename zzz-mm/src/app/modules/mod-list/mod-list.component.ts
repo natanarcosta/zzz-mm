@@ -20,6 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ModManagerService } from '../../services/mod-manager.service';
 import { AddModComponent } from '../add-mod/add-mod.component';
 import { AgentNamePipe } from '../../shared/agent-name.pipe';
+import { ModIndexService } from '../../services/mod-index.service';
 
 @Component({
   selector: 'app-mod-list',
@@ -41,17 +42,25 @@ export class ModListComponent implements OnInit, OnDestroy {
   private _cdr = inject(ChangeDetectorRef);
   private _configService = inject(ConfigService);
   private _modManagerService = inject(ModManagerService);
+  private _modIndexService = inject(ModIndexService);
 
   public selectedAgent = signal<ZZZAgent | null>(null);
   public enableShuffleMod = computed(() => {
     const selectedAgent = this.selectedAgent();
     if (!selectedAgent) return false;
-    const mods = selectedAgent.mods;
+    const mods = this.selectedAgentMods();
     if (!mods?.length) return false;
 
     return mods.length > 1;
   });
   public blur = signal<boolean>(false);
+
+  selectedAgentMods = computed(() => {
+    const agent = this.selectedAgent();
+    if (!agent) return;
+
+    return this._modIndexService.modsByAgent().get(agent.name);
+  });
 
   ngOnDestroy(): void {
     this._onDestroy.next();
@@ -108,13 +117,13 @@ export class ModListComponent implements OnInit, OnDestroy {
   public async handleActivateMod(mod: AgentMod) {
     await this._modManagerService.handleActivateMod(mod);
     if (this._configService.config.disable_others) {
-      const modIndex = this.selectedAgent()?.mods?.findIndex(
-        (_mod) => _mod.folderName === mod.folderName
+      const modIndex = this.selectedAgentMods()?.findIndex(
+        (_mod) => _mod.folderName === mod.folderName,
       );
       if (modIndex && modIndex < 0) return;
 
-      const toDisable = this.selectedAgent()?.mods?.filter(
-        (_, i) => i !== modIndex
+      const toDisable = this.selectedAgentMods()?.filter(
+        (_, i) => i !== modIndex,
       );
       if (!toDisable?.length) return;
 
@@ -143,13 +152,13 @@ export class ModListComponent implements OnInit, OnDestroy {
       .afterClosed()
       .subscribe({
         next: (value: boolean) => {
-          if (value) this._configService.refreshMods();
+          if (value) this._modIndexService.refresh();
         },
       });
   }
 
   public handleRefreshMods() {
-    this._configService.refreshMods().subscribe();
+    this._modIndexService.refresh();
   }
 
   toggleMod(mod: AgentMod) {
@@ -161,7 +170,7 @@ export class ModListComponent implements OnInit, OnDestroy {
   }
 
   public async pickRandomMod(): Promise<void> {
-    const agentMods = this.selectedAgent()?.mods;
+    const agentMods = this.selectedAgentMods();
     if (!agentMods?.length) return;
 
     const randomIndex = Math.floor(Math.random() * agentMods.length);

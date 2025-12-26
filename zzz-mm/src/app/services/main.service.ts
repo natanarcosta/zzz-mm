@@ -1,7 +1,8 @@
-import { Injectable, signal } from '@angular/core';
-import { AgentMod, ZZZAgent } from '../models/agent.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { AgentMod, AgentWithMods, ZZZAgent } from '../models/agent.model';
 import { BehaviorSubject } from 'rxjs';
 import rawAgents from '../../assets/character-data.json';
+import { ModIndexService } from './mod-index.service';
 
 interface CharacterDataFile {
   agents: {
@@ -16,9 +17,23 @@ interface CharacterDataFile {
 export class MainService {
   private _selectedAgent = signal<ZZZAgent | null>(null);
   private _agents = signal<ZZZAgent[]>([]);
+  private _modIndex = inject(ModIndexService);
 
   public agentSelected = new BehaviorSubject<ZZZAgent | null>(null);
   public agents$ = new BehaviorSubject<Array<ZZZAgent>>([]);
+
+  agentsWithMods = computed<AgentWithMods[]>(() => {
+    const agents = this._agents();
+    const modsByAgent = this._modIndex.modsByAgent();
+
+    return agents.map((agent) => {
+      const key = agent.name.toLowerCase().replaceAll(' ', '-');
+      return {
+        agent,
+        mods: modsByAgent.get(key) ?? [],
+      };
+    });
+  });
 
   constructor() {
     this.agentsInit();
@@ -50,7 +65,9 @@ export class MainService {
     const agent = this._agents().find((a) => a.id === agentId);
     if (!agent) return;
 
-    const targetMod = agent.mods?.find((m) => m.id === mod.id);
+    const agentWithMods = this._modIndex.modsByAgent().get(agent.name);
+
+    const targetMod = agentWithMods?.find((m) => m.id === mod.id);
     if (!targetMod) return;
 
     targetMod.json = mod.json;

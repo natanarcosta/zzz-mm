@@ -107,13 +107,15 @@ export class ModManagerService {
 
   async syncSymLinks() {
     const target = this._configService.config.mod_links_folder;
-    const result = await this._configService.readDirectory(target);
+    const result = await this._electronBridge.api?.readFolder(target);
+    if (!result) return;
 
     this.symSyncProgress.next({ total: result.length, current: 0 });
 
     result.forEach(async (folder, i) => {
       const jsonPath = target + '\\' + folder + '\\' + 'mod.json';
-      const jsonContent = await this._configService.readJsonFile(jsonPath);
+      const jsonContent =
+        await this._electronBridge.api?.readJsonfile(jsonPath);
       if (jsonContent) {
         jsonContent.active = true;
         this.electronAPI?.writeJsonFile(jsonPath, jsonContent);
