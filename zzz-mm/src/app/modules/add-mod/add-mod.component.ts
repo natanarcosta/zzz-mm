@@ -130,11 +130,10 @@ export class AddModComponent implements OnInit, OnDestroy {
     }
 
     this.filteredAgents$ = this.form.controls.character.valueChanges.pipe(
-      startWith(''),
       map((value) => {
         const name = typeof value === 'string';
         return name ? this._filter(value) : this.agents.slice();
-      })
+      }),
     );
 
     this.form.controls.url.valueChanges.subscribe({
@@ -152,7 +151,7 @@ export class AddModComponent implements OnInit, OnDestroy {
     const filterValue = name.toLowerCase();
 
     return this.agents.filter((option) =>
-      option.name.toLowerCase().includes(filterValue)
+      option.name.toLowerCase().includes(filterValue),
     );
   }
 
@@ -214,14 +213,20 @@ export class AddModComponent implements OnInit, OnDestroy {
     if (!this.file || !this.filePath) return;
     if (this.data.mode === 'install' && !this.form.valid) return;
     if (!this.electronAPI) return;
+    const characterName = this.form.controls.character.value?.name;
+    if (!characterName) {
+      this._notify.error('Invalid character name');
+    }
 
     this.isInstalling = true;
 
     const modId = Number(this.form.controls.url.value.split('/').pop());
     const isGBananaUrl = this.form.controls.url.value.includes('gamebanana');
     if (modId && this._config.auto_fetch && isGBananaUrl) {
+      console.log('Fetch gbanana');
       const data = await firstValueFrom(this._gBananaService.getModData(modId));
       this._gBananaData.set(data);
+      console.log('Proceeding after fetch');
     }
 
     const now = new Date().toISOString();
@@ -231,7 +236,7 @@ export class AddModComponent implements OnInit, OnDestroy {
       modData: {
         ...this.form.value,
         modName: this.form.controls.name.value,
-        character: (this.form.controls.character.value as any).name,
+        character: characterName,
         localInstalledAt: now,
         localUpdatedAt: now,
         gamebananaPreviewUrl:
@@ -254,7 +259,6 @@ export class AddModComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (value) => {
           if (value.success) {
-            this._configService.refreshMods();
             this._notify.success('Mod instalado com sucesso');
             this._dialogRef.close(true);
           } else {
@@ -289,7 +293,7 @@ export class AddModComponent implements OnInit, OnDestroy {
       .extractModForUpdate(
         payload.archivePath,
         mod.folderName,
-        this._config.source_mods_folder
+        this._config.source_mods_folder,
       )
       .pipe(finalize(() => (this.isInstalling = false)))
       .subscribe({

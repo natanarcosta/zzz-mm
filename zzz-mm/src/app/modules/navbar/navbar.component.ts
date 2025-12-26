@@ -27,7 +27,7 @@ export class NavbarComponent implements OnInit {
 
   ngOnInit(): void {
     this._configService.configReady.subscribe((config) =>
-      this.navbarStyle.set(config.navbar_type)
+      this.navbarStyle.set(config.navbar_type),
     );
 
     this._mainService.agents$.subscribe((_agents) => {
@@ -35,12 +35,15 @@ export class NavbarComponent implements OnInit {
     });
 
     this._mainService.agentSelected.subscribe((agent) =>
-      this.selectedAgent.set(agent)
+      this.selectedAgent.set(agent),
     );
   }
 
   public handleSelectAgent(agent: ZZZAgent): void {
-    if (this.selectedAgent()?.id === agent.id) return;
+    if (this.selectedAgent()?.id === agent.id) {
+      this._mainService.selectAgent(null);
+      return;
+    }
 
     this._mainService.selectAgent(agent);
   }

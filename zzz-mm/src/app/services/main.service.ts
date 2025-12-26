@@ -32,13 +32,13 @@ export class MainService {
         name: a.name,
         id: a.id,
         mods: [],
-      }))
+      })),
     );
 
     this.agents$.next(this._agents());
   }
 
-  selectAgent(agent: ZZZAgent): void {
+  selectAgent(agent: ZZZAgent | null): void {
     this._selectedAgent.set(agent);
     this.agentSelected.next(this._selectedAgent());
   }

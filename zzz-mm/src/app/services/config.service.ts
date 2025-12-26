@@ -2,7 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { AgentMod, ModJson, ZZZAgent } from '../models/agent.model';
 import { MainService } from './main.service';
 import { ElectronAPI, ElectronBridgeService } from './electron-bridge.service';
-import { from, Observable, ReplaySubject } from 'rxjs';
+import { from, Observable, ReplaySubject, firstValueFrom } from 'rxjs';
 import { NotificationService } from './notifications.service';
 import { NavbarTypeEnum } from '../models/enums';
 import { ModCacheService } from './mod-cache.service';
@@ -147,7 +147,7 @@ export class ConfigService {
         const folderPath = this.config.source_mods_folder + '\\' + folder;
         const folderContent: string[] = await this.readDirectory(
           folderPath,
-          false
+          false,
         );
 
         const jsonContent = await this.readJsonFile(filePath);
@@ -163,14 +163,14 @@ export class ConfigService {
         }
 
         const hasPreview = folderContent.find(
-          (content) => content === 'preview.jpg'
+          (content) => content === 'preview.jpg',
         );
 
         const hasImage = folderContent.find(
           (content) =>
             content.endsWith('.png') ||
             content.endsWith('.jpg') ||
-            content.endsWith('.jpeg')
+            content.endsWith('.jpeg'),
         );
 
         const character = jsonContent.character
@@ -180,7 +180,12 @@ export class ConfigService {
         const url = jsonContent.url;
         const isGBananaId = url && url.includes('gamebanana');
 
-        const agent = this.agents().find((a) => a.name === character);
+        let agent = this.agents().find((a) => a.name === character);
+        if (!agent) {
+          this._notify.error(`${character} added as Unknown`);
+          agent = this.agents().find((a) => a.id === 0);
+          jsonContent.character = agent!.name;
+        }
 
         if (agent) {
           const agentMod: AgentMod = { folderName: folder, json: jsonContent };
@@ -226,8 +231,12 @@ export class ConfigService {
   }
 
   public refreshMods(): Observable<void> {
-    this.loadFolders();
-    return from(this.populateCharacterMods());
+    return from(
+      (async () => {
+        await this.loadFolders();
+        await this.populateCharacterMods();
+      })(),
+    );
   }
 
   deleteByFolder(folderName: string) {

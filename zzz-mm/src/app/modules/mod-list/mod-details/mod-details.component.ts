@@ -406,7 +406,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       .subscribe();
   }
 
-  scanKeys() {
+  public scanKeys() {
     const mod = this.mod();
     if (!mod) return;
     const sourceFolderPath = this._configService.config.source_mods_folder;
@@ -417,9 +417,12 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
         if (!res.success) return;
 
         if (res.hotkeys?.length) {
+          if (!mod.json) return;
+
           mod.json!.hotkeys = res.hotkeys;
 
           this.mod.set({ ...mod });
+
           this._electronBridge.api?.writeJsonFile(
             `${sourceFolderPath}\\${mod.folderName}\\mod.json`,
             mod.json,
