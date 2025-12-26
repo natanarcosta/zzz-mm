@@ -157,7 +157,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       map((value) => {
         const name = typeof value === 'string';
         return name ? this._filter(value) : this.agents.slice();
-      })
+      }),
     );
 
     this._cdr.markForCheck();
@@ -187,7 +187,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const filterValue = name.toLowerCase();
 
     return this.agents.filter((option) =>
-      option.name.toLowerCase().includes(filterValue)
+      option.name.toLowerCase().includes(filterValue),
     );
   }
 
@@ -298,24 +298,27 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
 
   handleSaveGBananaImage() {
     if (!this.hasGbananaImage()) return;
+    const mod = this.mod();
+    if (!mod) return;
 
     const fileName = 'preview.jpg';
-    const previewPath = this.mod()?.previewPath;
+    const previewPath = mod.previewPath;
     if (!previewPath) return;
 
     const diskPath =
-      this._configService.config.source_mods_folder +
-      '\\' +
-      this.mod()?.folderName;
+      this._configService.config.source_mods_folder + '\\' + mod.folderName;
 
     this.isRefreshing.set(true);
 
     this._electronBridge
       .downloadImage(previewPath, fileName, diskPath)
       .subscribe({
-        next: () => this.handleRefreshMods(),
+        next: () => {
+          this.handleSaveMetadata();
+
+          this._notify.success('Image saved successfully');
+        },
       });
-    this._notify.success('Image saved successfully');
   }
 
   handleSaveMetadata() {
@@ -344,12 +347,12 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     await this._modManagerService.handleActivateMod(mod);
     if (this._configService.config.disable_others) {
       const selectedAgent = await firstValueFrom(
-        this._mainService.agentSelected
+        this._mainService.agentSelected,
       );
       if (!selectedAgent) return;
 
       const modIndex = selectedAgent.mods?.findIndex(
-        (_mod) => _mod.folderName === mod.folderName
+        (_mod) => _mod.folderName === mod.folderName,
       );
       if (modIndex && modIndex < 0) return;
 
@@ -398,7 +401,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       .pipe(
         finalize(() => {
           this.isRefreshing.set(false);
-        })
+        }),
       )
       .subscribe();
   }
@@ -419,7 +422,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
           this.mod.set({ ...mod });
           this._electronBridge.api?.writeJsonFile(
             `${sourceFolderPath}\\${mod.folderName}\\mod.json`,
-            mod.json
+            mod.json,
           );
         }
       });
