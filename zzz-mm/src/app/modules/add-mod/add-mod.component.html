@@ -17,36 +17,36 @@
     </div>
   </div>
 
-  @if(data.mode === 'install') {
-  <section class="form-section">
-    <form [formGroup]="form" class="form">
-      <mat-form-field appearance="fill">
-        <mat-label>Agent</mat-label>
-        <input
-          type="text"
-          matInput
-          formControlName="character"
-          [matAutocomplete]="auto"
-          #trigger
-        />
-        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
-          @for (option of filteredAgents$ | async; track option.id) {
-          <mat-option [value]="option">{{ option.name }}</mat-option>
-          }
-        </mat-autocomplete>
-      </mat-form-field>
+  @if (data.mode === "install") {
+    <section class="form-section">
+      <form [formGroup]="form" class="form">
+        <mat-form-field appearance="fill">
+          <mat-label>Agent</mat-label>
+          <input
+            type="text"
+            matInput
+            formControlName="character"
+            [matAutocomplete]="auto"
+            #trigger
+          />
+          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+            @for (option of filteredAgents$ | async; track option.id) {
+              <mat-option [value]="option">{{ option.name }}</mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Mod Name</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Mod Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>URL</mat-label>
-        <input matInput formControlName="url" />
-      </mat-form-field>
-    </form>
-  </section>
+        <mat-form-field appearance="outline">
+          <mat-label>URL</mat-label>
+          <input matInput formControlName="url" />
+        </mat-form-field>
+      </form>
+    </section>
   }
 
   <section class="actions">

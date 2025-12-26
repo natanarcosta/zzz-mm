@@ -17,18 +17,18 @@
       matTooltip="Add New Mod"
     ></i>
 
-    @if(blur()) {
-    <i
-      class="fa-solid fa-eye-low-vision"
-      (click)="toggleBlur()"
-      matTooltip="Disable Blur "
-    ></i>
+    @if (blur()) {
+      <i
+        class="fa-solid fa-eye-low-vision"
+        (click)="toggleBlur()"
+        matTooltip="Disable Blur "
+      ></i>
     } @else {
-    <i
-      class="fa-solid fa-eye"
-      (click)="toggleBlur()"
-      matTooltip="Enable Blur"
-    ></i>
+      <i
+        class="fa-solid fa-eye"
+        (click)="toggleBlur()"
+        matTooltip="Enable Blur"
+      ></i>
     }
     <i
       class="fa-solid fa-gear"
@@ -36,65 +36,65 @@
       matTooltip="Mod Manager Config"
     ></i>
   </section>
-  @if(selectedAgent()) {
-  <h1>
-    {{ selectedAgent()!.name | agentName }} mods
-    <span class="count">{{ selectedAgent()?.mods?.length }}</span>
-  </h1>
-  <section class="list-wrapper">
-    @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
-    <div class="mod-card" [ngClass]="{ active: agentMod.json?.active }">
-      <div class="image">
-        <img
-          [ngClass]="{ censor: blur() }"
-          [src]="
-            agentMod.previewPath ||
-            'assets/char-portraits/' + selectedAgent()!.id + '.png'
-          "
-        />
+  @if (selectedAgent()) {
+    <h1>
+      {{ selectedAgent()!.name | agentName }} mods
+      <span class="count">{{ selectedAgent()?.mods?.length }}</span>
+    </h1>
+    <section class="list-wrapper">
+      @for (agentMod of selectedAgent()?.mods; track agentMod.folderName) {
+        <div class="mod-card" [ngClass]="{ active: agentMod.json?.active }">
+          <div class="image">
+            <img
+              [ngClass]="{ censor: blur() }"
+              [src]="
+                agentMod.previewPath ||
+                'assets/char-portraits/' + selectedAgent()!.id + '.png'
+              "
+            />
 
-        <!-- OVERLAY -->
-        <div class="overlay">
-          <button
-            class="action primary"
-            [ngClass]="{ danger: agentMod.json?.active }"
-            (click)="toggleMod(agentMod); $event.stopPropagation()"
-          >
-            {{ agentMod.json?.active ? "Disable" : "Activate" }}
-          </button>
+            <!-- OVERLAY -->
+            <div class="overlay">
+              <button
+                class="action primary"
+                [ngClass]="{ danger: agentMod.json?.active }"
+                (click)="toggleMod(agentMod); $event.stopPropagation()"
+              >
+                {{ agentMod.json?.active ? "Disable" : "Activate" }}
+              </button>
 
-          <button
-            class="action secondary"
-            (click)="openDetailsDialog(agentMod); $event.stopPropagation()"
-          >
-            Details
-          </button>
+              <button
+                class="action secondary"
+                (click)="openDetailsDialog(agentMod); $event.stopPropagation()"
+              >
+                Details
+              </button>
+            </div>
+          </div>
+
+          <div class="content">
+            {{ agentMod.json?.modName || agentMod.folderName }}
+          </div>
+        </div>
+      } @empty {
+        Agente não possue mods.
+      }
+    </section>
+  } @else {
+    <div class="empty-wrapper">
+      <div class="empty-agent-state">
+        <div class="icon">
+          <i class="fa-solid fa-user-ninja"></i>
+        </div>
+
+        <h2>Choose an agent</h2>
+        <p>Select an agent on the left to manage its mods.</p>
+
+        <div class="hint">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Select one from the sidebar</span>
         </div>
       </div>
-
-      <div class="content">
-        {{ agentMod.json?.modName || agentMod.folderName }}
-      </div>
     </div>
-
-    } @empty { Agente não possue mods. }
-  </section>
-  } @else {
-  <div class="empty-wrapper">
-    <div class="empty-agent-state">
-      <div class="icon">
-        <i class="fa-solid fa-user-ninja"></i>
-      </div>
-
-      <h2>Choose an agent</h2>
-      <p>Select an agent on the left to manage its mods.</p>
-
-      <div class="hint">
-        <i class="fa-solid fa-arrow-left"></i>
-        <span>Select one from the sidebar</span>
-      </div>
-    </div>
-  </div>
-
   }
 </main>

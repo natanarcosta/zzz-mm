@@ -4,115 +4,115 @@
     <span class="app-version" *ngIf="appVersion()">v{{ appVersion() }}</span>
   </section>
   <section class="content">
-    @if(configsForm) {
-    <form [formGroup]="configsForm">
-      <section class="toggle-grid">
-        <!-- Blur -->
-        <div class="toggle-item">
-          <div class="toggle-label">
-            <span>Blur</span>
-            <i
-              class="fa-solid fa-circle-question"
-              matTooltip="Blurs mod images everywhere"
-            ></i>
+    @if (configsForm) {
+      <form [formGroup]="configsForm">
+        <section class="toggle-grid">
+          <!-- Blur -->
+          <div class="toggle-item">
+            <div class="toggle-label">
+              <span>Blur</span>
+              <i
+                class="fa-solid fa-circle-question"
+                matTooltip="Blurs mod images everywhere"
+              ></i>
+            </div>
+
+            <mat-slide-toggle formControlName="blur">
+              {{ configsForm.get("blur")?.value ? "Enabled" : "Disabled" }}
+            </mat-slide-toggle>
           </div>
 
-          <mat-slide-toggle formControlName="blur">
-            {{ configsForm.get("blur")?.value ? "Enabled" : "Disabled" }}
-          </mat-slide-toggle>
-        </div>
+          <!-- Auto Fetch -->
+          <div class="toggle-item">
+            <div class="toggle-label">
+              <span>Auto Fetch (Gamebanana)</span>
+              <i
+                class="fa-solid fa-circle-question"
+                matTooltip="When adding a new mod, tries to fetch Gamebanana data when a proper URL is provided"
+              ></i>
+            </div>
 
-        <!-- Auto Fetch -->
-        <div class="toggle-item">
-          <div class="toggle-label">
-            <span>Auto Fetch (Gamebanana)</span>
-            <i
-              class="fa-solid fa-circle-question"
-              matTooltip="When adding a new mod, tries to fetch Gamebanana data when a proper URL is provided"
-            ></i>
+            <mat-slide-toggle formControlName="autoFetch">
+              {{ configsForm.get("autoFetch")?.value ? "Enabled" : "Disabled" }}
+            </mat-slide-toggle>
           </div>
 
-          <mat-slide-toggle formControlName="autoFetch">
-            {{ configsForm.get("autoFetch")?.value ? "Enabled" : "Disabled" }}
-          </mat-slide-toggle>
-        </div>
+          <!-- Disable Others -->
+          <div class="toggle-item">
+            <div class="toggle-label">
+              <span>Disable others</span>
+              <i
+                class="fa-solid fa-circle-question"
+                matTooltip="When enabling a mod, disables all other mods from the chosen agent"
+              ></i>
+            </div>
 
-        <!-- Disable Others -->
-        <div class="toggle-item">
-          <div class="toggle-label">
-            <span>Disable others</span>
-            <i
-              class="fa-solid fa-circle-question"
-              matTooltip="When enabling a mod, disables all other mods from the chosen agent"
-            ></i>
+            <mat-slide-toggle formControlName="disableOthers">
+              {{
+                configsForm.get("disableOthers")?.value ? "Enabled" : "Disabled"
+              }}
+            </mat-slide-toggle>
           </div>
+        </section>
 
-          <mat-slide-toggle formControlName="disableOthers">
-            {{
-              configsForm.get("disableOthers")?.value ? "Enabled" : "Disabled"
-            }}
-          </mat-slide-toggle>
+        <div class="field-wrapper">
+          <mat-form-field appearance="fill" class="w-90">
+            <mat-label>Source</mat-label>
+            <input
+              type="text"
+              matInput
+              formControlName="sourcePath"
+            /> </mat-form-field
+          ><i
+            class="fa-solid fa-folder-open"
+            (click)="handlePickFolder('source')"
+          ></i>
         </div>
-      </section>
-
-      <div class="field-wrapper">
-        <mat-form-field appearance="fill" class="w-90">
-          <mat-label>Source</mat-label>
-          <input
-            type="text"
-            matInput
-            formControlName="sourcePath"
-          /> </mat-form-field
-        ><i
-          class="fa-solid fa-folder-open"
-          (click)="handlePickFolder('source')"
-        ></i>
-      </div>
-      <div class="field-wrapper">
-        <mat-form-field appearance="fill" class="w-90">
-          <mat-label>Target</mat-label>
-          <input type="text" matInput formControlName="linkPath" />
-        </mat-form-field>
-        <i
-          class="fa-solid fa-folder-open"
-          (click)="handlePickFolder('target')"
-        ></i>
-      </div>
-      <div class="field-wrapper">
-        <mat-form-field appearance="fill" class="w-90">
-          <mat-label>d3dx_user.ini path</mat-label>
-          <input type="text" matInput formControlName="userIniPath" />
-        </mat-form-field>
-        <i
-          class="fa-solid fa-folder-open"
-          (click)="handlePickFolder('userIni')"
-        ></i>
-      </div>
-      <div class="field-wrapper">
-        <mat-form-field appearance="fill" class="w-90">
-          <mat-label>Navbar Type</mat-label>
-          <mat-select formControlName="navbarType">
-            <mat-option value="list">List</mat-option>
-            <mat-option value="grid">Grid</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <i
-          class="fa-solid fa-circle-question"
-          matTooltip="Switches between agent selection types"
-        ></i>
-      </div>
-    </form>
+        <div class="field-wrapper">
+          <mat-form-field appearance="fill" class="w-90">
+            <mat-label>Target</mat-label>
+            <input type="text" matInput formControlName="linkPath" />
+          </mat-form-field>
+          <i
+            class="fa-solid fa-folder-open"
+            (click)="handlePickFolder('target')"
+          ></i>
+        </div>
+        <div class="field-wrapper">
+          <mat-form-field appearance="fill" class="w-90">
+            <mat-label>d3dx_user.ini path</mat-label>
+            <input type="text" matInput formControlName="userIniPath" />
+          </mat-form-field>
+          <i
+            class="fa-solid fa-folder-open"
+            (click)="handlePickFolder('userIni')"
+          ></i>
+        </div>
+        <div class="field-wrapper">
+          <mat-form-field appearance="fill" class="w-90">
+            <mat-label>Navbar Type</mat-label>
+            <mat-select formControlName="navbarType">
+              <mat-option value="list">List</mat-option>
+              <mat-option value="grid">Grid</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <i
+            class="fa-solid fa-circle-question"
+            matTooltip="Switches between agent selection types"
+          ></i>
+        </div>
+      </form>
     }
   </section>
-  @if(symLinkSyncProgress() > 0){
-  <section class="progress">
-    <mat-progress-bar
-      mode="determinate"
-      [value]="symLinkSyncProgress()"
-      color="primary"
-    ></mat-progress-bar>
-    {{ symLinkSyncProgress() + " %" }}
-  </section>
+  @if (symLinkSyncProgress() > 0) {
+    <section class="progress">
+      <mat-progress-bar
+        mode="determinate"
+        [value]="symLinkSyncProgress()"
+        color="primary"
+      ></mat-progress-bar>
+      {{ symLinkSyncProgress() + " %" }}
+    </section>
   }
 
   <section class="actions">

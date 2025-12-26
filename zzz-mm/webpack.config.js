@@ -1,12 +1,8 @@
-// webpack.config.js
 const path = require("path");
 
 const isProd = process.env.NODE_ENV === "production";
 
 module.exports = [
-  // ===============================
-  // PRELOAD (OBRIGATÓRIO bundle)
-  // ===============================
   {
     entry: "./preload.js",
     target: "electron-preload",

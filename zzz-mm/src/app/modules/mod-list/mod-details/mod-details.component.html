@@ -1,33 +1,33 @@
 <main id="mod-details" *ngIf="mod() as mod">
   <!-- IMAGE -->
 
-  @if(mod.previewPath) {
-  <div class="image">
-    <img
-      [src]="previewUrl() || imageUrl()"
-      loading="lazy"
-      decoding="async"
-      [ngClass]="{ censor: blur(), dragging: isDragging }"
+  @if (mod.previewPath) {
+    <div class="image">
+      <img
+        [src]="previewUrl() || imageUrl()"
+        loading="lazy"
+        decoding="async"
+        [ngClass]="{ censor: blur(), dragging: isDragging }"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      />
+      <p class="file" *ngIf="file">📦 {{ file.name }}</p>
+    </div>
+  } @else {
+    <div
+      class="dropzone"
+      [ngClass]="{ 'has-image': previewUrl(), dragging: isDragging }"
       (dragover)="onDragOver($event)"
       (dragleave)="onDragLeave($event)"
       (drop)="onDrop($event)"
-    />
-    <p class="file" *ngIf="file">📦 {{ file.name }}</p>
-  </div>
-  } @else {
-  <div
-    class="dropzone"
-    [ngClass]="{ 'has-image': previewUrl(), dragging: isDragging }"
-    (dragover)="onDragOver($event)"
-    (dragleave)="onDragLeave($event)"
-    (drop)="onDrop($event)"
-  >
-    <mat-icon class="icon" *ngIf="!previewUrl()">upload</mat-icon>
+    >
+      <mat-icon class="icon" *ngIf="!previewUrl()">upload</mat-icon>
 
-    <p class="title">Arraste o mod aqui</p>
-    <p class="subtitle">ou solte um arquivo .jpg / .png</p>
-    <p class="file" *ngIf="file">📦 {{ file.name }}</p>
-  </div>
+      <p class="title">Arraste o mod aqui</p>
+      <p class="subtitle">ou solte um arquivo .jpg / .png</p>
+      <p class="file" *ngIf="file">📦 {{ file.name }}</p>
+    </div>
   }
 
   <!-- CONTENT -->
@@ -53,7 +53,7 @@
           New version available
           <small>
             Last update:
-            {{ availableUpdate() | date : "mediumDate" }}
+            {{ availableUpdate() | date: "mediumDate" }}
           </small>
         </span>
       </div>
@@ -121,7 +121,7 @@
         <i class="fa-regular fa-calendar"></i>
         <span>Installed</span>
         <strong>{{
-          (mod.json.localInstalledAt | date : "mediumDate") || "N/A"
+          (mod.json.localInstalledAt | date: "mediumDate") || "N/A"
         }}</strong>
       </div>
 
@@ -129,7 +129,7 @@
         <i class="fa-regular fa-calendar"></i>
         <span>Last update</span>
         <strong>{{
-          (mod.json.localUpdatedAt | date : "mediumDate") || "N/A"
+          (mod.json.localUpdatedAt | date: "mediumDate") || "N/A"
         }}</strong>
       </div>
 
@@ -146,9 +146,9 @@
         <span>Hotkeys</span>
         <div class="keys">
           @for (key of mod.json.hotkeys; track $index) {
-          <span>{{ key.description }}: {{ key.key }}</span>
+            <span>{{ key.description }}: {{ key.key }}</span>
           } @empty {
-          <span class="empty">None</span>
+            <span class="empty">None</span>
           }
         </div>
       </div>
@@ -172,7 +172,7 @@
         />
         <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
           @for (option of filteredAgents$ | async; track option.id) {
-          <mat-option [value]="option">{{ option.name }}</mat-option>
+            <mat-option [value]="option">{{ option.name }}</mat-option>
           }
         </mat-autocomplete>
       </mat-form-field>
