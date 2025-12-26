@@ -1,11 +1,13 @@
 <main id="mod-list" [ngClass]="{ 'min-h': !selectedAgent() }">
   <section class="header">
-    <i
-      class="fa-solid fa-shuffle"
-      (click)="pickRandomMod()"
-      matTooltip="Enable Random Mod"
-      *ngIf="enableShuffleMod()"
-    ></i>
+    @if (enableShuffleMod()) {
+      <i
+        class="fa-solid fa-shuffle"
+        (click)="pickRandomMod()"
+        matTooltip="Enable Random Mod"
+      ></i>
+    }
+
     <i
       class="fa-solid fa-rotate-right"
       (click)="handleRefreshMods()"

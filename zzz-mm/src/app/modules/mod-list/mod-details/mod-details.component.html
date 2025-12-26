@@ -1,6 +1,5 @@
 <main id="mod-details" *ngIf="mod() as mod">
   <!-- IMAGE -->
-
   @if (mod.previewPath) {
     <div class="image">
       <img
@@ -12,7 +11,9 @@
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
       />
-      <p class="file" *ngIf="file">📦 {{ file.name }}</p>
+      @if (file) {
+        <p class="file">📦 {{ file.name }}</p>
+      }
     </div>
   } @else {
     <div
@@ -46,147 +47,152 @@
     </header>
 
     <!--  UPDATE  -->
-    <section class="update-banner" *ngIf="hasUpdate()">
-      <div class="info">
-        <i class="fa-solid fa-arrow-rotate-right"></i>
-        <span>
-          New version available
-          <small>
-            Last update:
-            {{ availableUpdate() | date: "mediumDate" }}
-          </small>
-        </span>
-      </div>
+    @if (hasUpdate()) {
+      <section class="update-banner">
+        <div class="info">
+          <i class="fa-solid fa-arrow-rotate-right"></i>
+          <span>
+            New version available
+            <small>
+              Last update:
+              {{ availableUpdate() | date: "mediumDate" }}
+            </small>
+          </span>
+        </div>
 
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="handleUpdateExistindMod()"
-        *ngIf="!mod.json?.active"
-      >
-        Update
-      </button>
-    </section>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="handleUpdateExistindMod()"
+          *ngIf="!mod.json?.active"
+        >
+          Update
+        </button>
+      </section>
+    }
 
     <!-- TOOLBOX -->
-    <section class="toolbox" *ngIf="hasGameBananaUrl()">
-      <button mat-flat-button (click)="handleGetModDataFromGBanana()">
-        <i
-          class="fa-solid fa-cloud-arrow-down"
-          *ngIf="!isGettingGBananaData()"
-        ></i>
-        <mat-progress-bar
-          mode="indeterminate"
-          *ngIf="isGettingGBananaData()"
-        ></mat-progress-bar>
-        Sync from GameBanana
-      </button>
+    @if (hasGameBananaUrl()) {
+      <section class="toolbox">
+        <button mat-flat-button (click)="handleGetModDataFromGBanana()">
+          @if (isGettingGBananaData()) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          } @else {
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+          }
+          Sync from GameBanana
+        </button>
 
-      <button
-        mat-stroked-button
-        *ngIf="hasGbananaImage()"
-        (click)="handleSaveGBananaImage()"
-      >
-        <i class="fa-solid fa-image"></i>
-        Save Image
-      </button>
+        <button
+          mat-stroked-button
+          *ngIf="hasGbananaImage()"
+          (click)="handleSaveGBananaImage()"
+        >
+          <i class="fa-solid fa-image"></i>
+          Save Image
+        </button>
 
-      <button
-        mat-stroked-button
-        *ngIf="hasGbananaImage()"
-        (click)="handleSaveMetadata()"
-      >
-        <i class="fa-solid fa-list"></i>
-        Save Metadata
-      </button>
-    </section>
+        <button
+          mat-stroked-button
+          *ngIf="hasGbananaImage()"
+          (click)="handleSaveMetadata()"
+        >
+          <i class="fa-solid fa-list"></i>
+          Save Metadata
+        </button>
+      </section>
+    }
 
     <!-- META -->
-    <section class="meta-grid" *ngIf="!editMode() && mod.json">
-      <div class="item">
-        <i class="fa-solid fa-user"></i>
-        <span>Character</span>
-        <strong>{{ mod.json.character | agentName }}</strong>
-      </div>
-
-      <div class="item description">
-        <i class="fa-solid fa-align-left"></i>
-        <span>Description</span>
-        <strong class="clamp">
-          {{ mod.json.description || "None" }}
-        </strong>
-      </div>
-
-      <div class="item">
-        <i class="fa-regular fa-calendar"></i>
-        <span>Installed</span>
-        <strong>{{
-          (mod.json.localInstalledAt | date: "mediumDate") || "N/A"
-        }}</strong>
-      </div>
-
-      <div class="item">
-        <i class="fa-regular fa-calendar"></i>
-        <span>Last update</span>
-        <strong>{{
-          (mod.json.localUpdatedAt | date: "mediumDate") || "N/A"
-        }}</strong>
-      </div>
-
-      <div class="item full">
-        <i class="fa-solid fa-link"></i>
-        <span>URL</span>
-        <strong class="link" (click)="handleOpenExternalUrl()">
-          {{ mod.json.url }}
-        </strong>
-      </div>
-
-      <div class="item full">
-        <i class="fa-regular fa-keyboard"></i>
-        <span>Hotkeys</span>
-        <div class="keys">
-          @for (key of mod.json.hotkeys; track $index) {
-            <span>{{ key.description }}: {{ key.key }}</span>
-          } @empty {
-            <span class="empty">None</span>
-          }
+    @if (!editMode() && mod.json) {
+      <section class="meta-grid">
+        <div class="item">
+          <i class="fa-solid fa-user"></i>
+          <span>Character</span>
+          <strong>{{ mod.json.character | agentName }}</strong>
         </div>
-      </div>
-    </section>
+
+        <div class="item description">
+          <i class="fa-solid fa-align-left"></i>
+          <span>Description</span>
+          <strong class="clamp">
+            {{ mod.json.description || "None" }}
+          </strong>
+        </div>
+
+        <div class="item">
+          <i class="fa-regular fa-calendar"></i>
+          <span>Installed</span>
+          <strong>{{
+            (mod.json.localInstalledAt | date: "mediumDate") || "N/A"
+          }}</strong>
+        </div>
+
+        <div class="item">
+          <i class="fa-regular fa-calendar"></i>
+          <span>Last update</span>
+          <strong>{{
+            (mod.json.localUpdatedAt | date: "mediumDate") || "N/A"
+          }}</strong>
+        </div>
+
+        <div class="item full">
+          <i class="fa-solid fa-link"></i>
+          <span>URL</span>
+          <strong class="link" (click)="handleOpenExternalUrl()">
+            {{ mod.json.url }}
+          </strong>
+        </div>
+
+        <div class="item full">
+          <i class="fa-regular fa-keyboard"></i>
+          <span>Hotkeys</span>
+          <div class="keys">
+            @for (key of mod.json.hotkeys; track $index) {
+              <span>{{ key.description }}: {{ key.key }}</span>
+            } @empty {
+              <span class="empty">None</span>
+            }
+          </div>
+        </div>
+      </section>
+    }
 
     <!-- EDIT MODE -->
-    <form [formGroup]="form" *ngIf="editMode()" class="edit-form">
-      <mat-form-field>
-        <mat-label>Mod Name</mat-label>
-        <input matInput formControlName="modName" />
-      </mat-form-field>
+    @if (editMode()) {
+      <form [formGroup]="form" class="edit-form">
+        <mat-form-field>
+          <mat-label>Mod Name</mat-label>
+          <input matInput formControlName="modName" />
+        </mat-form-field>
 
-      <mat-form-field appearance="fill">
-        <mat-label>Character</mat-label>
-        <input
-          type="text"
-          matInput
-          formControlName="character"
-          [matAutocomplete]="auto"
-          #trigger
-        />
-        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
-          @for (option of filteredAgents$ | async; track option.id) {
-            <mat-option [value]="option">{{ option.name }}</mat-option>
-          }
-        </mat-autocomplete>
-      </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Character</mat-label>
+          <input
+            type="text"
+            matInput
+            formControlName="character"
+            [matAutocomplete]="auto"
+            #trigger
+          />
+          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+            @for (option of filteredAgents$ | async; track option.id) {
+              <mat-option [value]="option">{{ option.name }}</mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Description</mat-label>
-        <input matInput formControlName="description" />
-      </mat-form-field>
+        <mat-form-field>
+          <mat-label>Description</mat-label>
+          <input matInput formControlName="description" />
+        </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>URL</mat-label>
-        <input matInput formControlName="url" />
-      </mat-form-field>
-    </form>
+        <mat-form-field>
+          <mat-label>URL</mat-label>
+          <input matInput formControlName="url" />
+        </mat-form-field>
+      </form>
+    }
   </section>
 
   <!-- ACTIONS -->
@@ -240,11 +246,12 @@
         *ngIf="mod.json?.active"
         [disabled]="isSyncingIni()"
       >
-        <i class="fa-solid fa-rotate" *ngIf="!isSyncingIni()"></i>
-        <mat-progress-bar
-          mode="indeterminate"
-          *ngIf="isSyncingIni()"
-        ></mat-progress-bar>
+        @if (isSyncingIni()) {
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        } @else {
+          <i class="fa-solid fa-rotate"></i>
+        }
+
         Sync .ini variables
       </button>
     </div>

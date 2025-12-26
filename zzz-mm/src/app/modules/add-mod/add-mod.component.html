@@ -56,10 +56,10 @@
       [disabled]="disableSubmit"
       (click)="confirm()"
     >
-      <mat-progress-bar
-        mode="indeterminate"
-        *ngIf="isInstalling"
-      ></mat-progress-bar>
+      @if (isInstalling) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+
       {{ data.mode === "install" ? "Install mod" : "Update mod" }}
     </button>
 

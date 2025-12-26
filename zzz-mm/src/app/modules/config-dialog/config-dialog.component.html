@@ -1,7 +1,9 @@
 <main id="config-dialog">
   <section class="header">
     <h1>App Configs</h1>
-    <span class="app-version" *ngIf="appVersion()">v{{ appVersion() }}</span>
+    @if (appVersion()) {
+      <span class="app-version">v{{ appVersion() }}</span>
+    }
   </section>
   <section class="content">
     @if (configsForm) {
