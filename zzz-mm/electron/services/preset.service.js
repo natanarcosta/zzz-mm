@@ -27,7 +27,12 @@ function createPresetService(app) {
   }
 
   function readPreset(id) {
-    return JSON.parse(fs.readFileSync(getPresetPath(id), "utf-8"));
+    try {
+      return JSON.parse(fs.readFileSync(getPresetPath(id), "utf-8"));
+    } catch (e) {
+      console.error("PRESET:READ_PRESET_ERROR", { id }, e);
+      return null;
+    }
   }
 
   function writePreset(preset) {
