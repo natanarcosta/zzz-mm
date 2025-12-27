@@ -24,6 +24,7 @@ import { ModIndexService } from '../../services/mod-index.service';
 import { PresetService } from '../../services/preset.service';
 import { MatSelectModule } from '@angular/material/select';
 import { PresetCreateDialogComponent } from './preset-create/preset-create-dialog.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-mod-list',
@@ -92,6 +93,24 @@ export class ModListComponent implements OnInit, OnDestroy {
     this.presetService.setActivePreset(id);
   }
 
+  onDeletePreset(id: string) {
+    this._dialog
+      .open(ConfirmDialogComponent, {
+        data: {
+          title: 'Delete the preset?',
+          message: 'This action can not be undone!',
+        },
+      })
+      .afterClosed()
+      .subscribe({
+        next: (data) => {
+          if (data) {
+            this.presetService.deletePreset(id);
+          }
+        },
+      });
+  }
+
   createPreset() {
     this._dialog
       .open(PresetCreateDialogComponent, {
@@ -101,7 +120,6 @@ export class ModListComponent implements OnInit, OnDestroy {
       .afterClosed()
       .subscribe((name: string | undefined) => {
         if (!name) return;
-
         this.presetService.createPreset(name);
       });
   }

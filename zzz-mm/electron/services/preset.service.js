@@ -8,7 +8,8 @@ function createPresetService(app) {
   const CONFIG_PATH = path.join(USER_DIR, "config.json");
 
   function ensurePresetsDir() {
-    if (!fs.existsSync(PRESETS_DIR)) fs.mkdirSync(PRESETS_DIR, { recursive: true });
+    if (!fs.existsSync(PRESETS_DIR))
+      fs.mkdirSync(PRESETS_DIR, { recursive: true });
   }
 
   function getConfig() {
@@ -48,7 +49,7 @@ function createPresetService(app) {
       writePreset(preset);
       fs.writeFileSync(
         ACTIVE_PRESET_FILE,
-        JSON.stringify({ id: preset.id }, null, 2)
+        JSON.stringify({ id: preset.id }, null, 2),
       );
     }
   }
@@ -59,7 +60,7 @@ function createPresetService(app) {
       .readdirSync(PRESETS_DIR)
       .filter((f) => f.endsWith(".json") && !f.startsWith("_"))
       .map((file) =>
-        JSON.parse(fs.readFileSync(path.join(PRESETS_DIR, file), "utf-8"))
+        JSON.parse(fs.readFileSync(path.join(PRESETS_DIR, file), "utf-8")),
       );
   }
 
@@ -96,6 +97,34 @@ function createPresetService(app) {
     writePreset(preset);
   }
 
+  function deletePreset(presetId) {
+    try {
+      ensureDefaultPreset();
+      if (presetId === "default") {
+        return { success: false, error: "Cannot delete default preset" };
+      }
+
+      const filePath = getPresetPath(presetId);
+      if (!fs.existsSync(filePath)) {
+        return { success: false, error: "Preset not found" };
+      }
+
+      const activeId = getActivePresetId();
+      const deletedWasActive = activeId === presetId;
+      if (deletedWasActive) {
+        // Switch to default before removing
+        setActivePreset("default");
+      }
+
+      fs.rmSync(filePath, { force: true });
+
+      return { success: true, activeId: getActivePresetId(), deletedWasActive };
+    } catch (e) {
+      console.error("PRESET:DELETE_ERROR", presetId, e);
+      return { success: false, error: e?.message || String(e) };
+    }
+  }
+
   // Symlink management and mod.json update
   async function _ensureDir(dir) {
     if (!fs.existsSync(dir)) await fs.promises.mkdir(dir, { recursive: true });
@@ -103,7 +132,8 @@ function createPresetService(app) {
 
   async function _createSymlink(target, linkPath) {
     await _ensureDir(path.dirname(linkPath));
-    if (fs.existsSync(linkPath)) await fs.promises.rm(linkPath, { recursive: true, force: true });
+    if (fs.existsSync(linkPath))
+      await fs.promises.rm(linkPath, { recursive: true, force: true });
     const type = process.platform === "win32" ? "junction" : "dir";
     await fs.promises.symlink(target, linkPath, type);
   }
@@ -112,7 +142,8 @@ function createPresetService(app) {
     if (!fs.existsSync(linkPath)) return;
     const stat = await fs.promises.lstat(linkPath);
     if (stat.isSymbolicLink()) await fs.promises.unlink(linkPath);
-    else if (stat.isDirectory()) await fs.promises.rm(linkPath, { recursive: true, force: true });
+    else if (stat.isDirectory())
+      await fs.promises.rm(linkPath, { recursive: true, force: true });
   }
 
   async function _writeModJson(sourceFolder, active) {
@@ -140,7 +171,9 @@ function createPresetService(app) {
     await _ensureDir(sourceRoot);
     await _ensureDir(linksRoot);
 
-    const folders = fs.readdirSync(sourceRoot).filter((f) => !f.endsWith(".txt"));
+    const folders = fs
+      .readdirSync(sourceRoot)
+      .filter((f) => !f.endsWith(".txt"));
 
     for (const folder of folders) {
       const shouldEnable = preset.mods[folder] === true;
@@ -148,9 +181,17 @@ function createPresetService(app) {
       const link = path.join(linksRoot, folder);
 
       if (shouldEnable) {
-        try { await _createSymlink(source, link); } catch (e) { console.error("SYMLINK_CREATE", folder, e); }
+        try {
+          await _createSymlink(source, link);
+        } catch (e) {
+          console.error("SYMLINK_CREATE", folder, e);
+        }
       } else {
-        try { await _removeSymlink(link); } catch (e) { console.error("SYMLINK_REMOVE", folder, e); }
+        try {
+          await _removeSymlink(link);
+        } catch (e) {
+          console.error("SYMLINK_REMOVE", folder, e);
+        }
       }
 
       await _writeModJson(source, shouldEnable);
@@ -216,7 +257,7 @@ function createPresetService(app) {
           console.error("PRESET:BATCH_CHANGE", modId, e);
         }
         await _writeModJson(source, enabled);
-      })
+      }),
     );
 
     return { success: true, preset };
@@ -233,6 +274,7 @@ function createPresetService(app) {
     applyPresetModChange,
     applyPresetBatchChanges,
     getActivePresetId,
+    deletePreset,
   };
 }
 

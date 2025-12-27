@@ -42,7 +42,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       IpcHandler.SYNC_MOD_INI_FROM_D3DX,
       modFolderName,
       d3dxUserIniPath,
-      modsRoot
+      modsRoot,
     ),
   quitApp: () => ipcRenderer.invoke(IpcHandler.APP_QUIT),
   getAppVersion: () => ipcRenderer.invoke(IpcHandler.GET_APP_VERSION),
@@ -57,6 +57,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke(IpcHandler.PRESET_UPDATE_MOD, { modId, enabled }),
   updatePresetBatch: (changes) =>
     ipcRenderer.invoke(IpcHandler.PRESET_BATCH_UPDATE, changes),
+  deletePreset: (presetId) =>
+    ipcRenderer.invoke(IpcHandler.PRESET_DELETE, presetId),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

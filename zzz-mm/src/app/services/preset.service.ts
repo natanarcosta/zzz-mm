@@ -16,7 +16,9 @@ export class PresetService {
     return this._presets.asReadonly();
   }
 
-  async updateModsBatch(changes: Array<{ modId: string; enabled: boolean }>): Promise<void> {
+  async updateModsBatch(
+    changes: Array<{ modId: string; enabled: boolean }>,
+  ): Promise<void> {
     const current = { ...(this._activeMods() || {}) };
     for (const c of changes) {
       current[c.modId] = c.enabled;
@@ -72,13 +74,34 @@ export class PresetService {
     });
   }
 
+  deletePreset(presetId: string) {
+    return this._electron.deletePreset(presetId).subscribe({
+      next: (res) => {
+        if (!res?.success) return;
+
+        // remove from list
+        const list = this._presets();
+        this._presets.set(list.filter((p) => p.id !== presetId));
+
+        // if active changed on backend, update active signals
+        if (res.activeId && res.preset) {
+          this._activeId.set(res.activeId);
+          this._activeMods.set(res.preset.mods || {});
+          this._modIndex.refresh();
+        }
+      },
+    });
+  }
+
   async updateMod(modId: string, enabled: boolean): Promise<void> {
     const current = { ...(this._activeMods() || {}) };
     current[modId] = enabled;
     this._activeMods.set(current);
     this._patchActiveModInIndex(modId, enabled);
 
-    const res = await firstValueFrom(this._electron.updatePresetMod(modId, enabled));
+    const res = await firstValueFrom(
+      this._electron.updatePresetMod(modId, enabled),
+    );
     if (!res.success) return;
     this._activeMods.set(res.preset.mods || {});
     this._patchActiveModInIndex(modId, enabled);
@@ -90,7 +113,7 @@ export class PresetService {
       const idx = list.findIndex((m) => m.folderName === folderName);
       if (idx >= 0) {
         const mod = list[idx];
-        const json = mod.json ? { ...mod.json, active } : { active } as any;
+        const json = mod.json ? { ...mod.json, active } : ({ active } as any);
         const updated = { ...mod, json };
         const newList = [...list];
         newList[idx] = updated;

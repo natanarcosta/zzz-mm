@@ -42,6 +42,7 @@ const IpcHandler = {
   PRESET_CREATE: "preset-create",
   PRESET_UPDATE_MOD: "preset-update-mod",
   PRESET_BATCH_UPDATE: "preset-batch-update",
+  PRESET_DELETE: "preset-delete",
 
   // =====================
   // SYSTEM

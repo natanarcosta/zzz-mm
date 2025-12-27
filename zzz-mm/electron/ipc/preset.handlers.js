@@ -24,24 +24,29 @@ function registerPresetHandlers(ipcMain, app) {
     return preset;
   });
 
-  ipcMain.handle(
-    IpcHandler.PRESET_UPDATE_MOD,
-    async (_, payload) => {
-      const { modId, enabled } = payload;
-      const result = await svc.applyPresetModChange(modId, enabled);
-      const active = svc.getActivePreset();
-      return { ...result, preset: active };
-    }
-  );
+  ipcMain.handle(IpcHandler.PRESET_UPDATE_MOD, async (_, payload) => {
+    const { modId, enabled } = payload;
+    const result = await svc.applyPresetModChange(modId, enabled);
+    const active = svc.getActivePreset();
+    return { ...result, preset: active };
+  });
 
-  ipcMain.handle(
-    IpcHandler.PRESET_BATCH_UPDATE,
-    async (_, changes) => {
-      const result = await svc.applyPresetBatchChanges(changes);
+  ipcMain.handle(IpcHandler.PRESET_BATCH_UPDATE, async (_, changes) => {
+    const result = await svc.applyPresetBatchChanges(changes);
+    const active = svc.getActivePreset();
+    return { ...result, preset: active };
+  });
+
+  ipcMain.handle(IpcHandler.PRESET_DELETE, async (_, presetId) => {
+    const result = svc.deletePreset(presetId);
+    if (result?.success && result.activeId) {
+      // Apply the newly active preset (likely default)
+      await svc.applyActivePreset();
       const active = svc.getActivePreset();
       return { ...result, preset: active };
     }
-  );
+    return { ...result };
+  });
 }
 
 module.exports = { registerPresetHandlers };
