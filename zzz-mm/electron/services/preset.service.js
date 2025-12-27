@@ -75,7 +75,14 @@ function createPresetService(app) {
   }
 
   function createPreset(name) {
-    const id = name.toLowerCase().replace(/\s+/g, "-");
+    ensurePresetsDir();
+    const baseId = name.toLowerCase().replace(/\s+/g, "-");
+    let id = baseId;
+    let counter = 1;
+
+    while (fs.existsSync(getPresetPath(id))) {
+      id = `${baseId}-${counter++}`;
+    }
     const preset = {
       id,
       name,
