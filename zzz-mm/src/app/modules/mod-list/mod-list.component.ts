@@ -98,7 +98,7 @@ export class ModListComponent implements OnInit, OnDestroy {
       .open(ConfirmDialogComponent, {
         data: {
           title: 'Delete the preset?',
-          message: 'This action can not be undone!',
+          message: 'This action cannot be undone!',
         },
       })
       .afterClosed()
