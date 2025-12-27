@@ -22,8 +22,8 @@ import { FormsModule } from '@angular/forms';
         <button
           mat-raised-button
           color="primary"
-          [disabled]="!name"
-          (click)="confirm()"
+          [disabled]="!name || !name.trim()"
+          (click)="confirm()""
         >
           Create
         </button>
