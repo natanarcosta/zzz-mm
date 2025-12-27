@@ -100,6 +100,12 @@ function createPresetService(app) {
   }
 
   function setActivePreset(id) {
+    ensurePresetsDir();
+    const presetPath = getPresetPath(id);
+    if (!fs.existsSync(presetPath)) {
+      console.error("PRESET:SET_ACTIVE_ERROR - preset does not exist", { id });
+      return;
+    }
     fs.writeFileSync(ACTIVE_PRESET_FILE, JSON.stringify({ id }, null, 2));
   }
 
