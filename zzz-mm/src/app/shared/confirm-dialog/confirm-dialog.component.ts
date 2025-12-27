@@ -10,7 +10,7 @@ import {
 @Component({
   selector: 'app-confirm-dialog',
   template: `
-    <main style="padding: 24px; display: flex; gap: 16px; flex-direction: column; width: 20dvw; border-radius: 14px; color: #ffffff">
+    <main style="padding: 24px; display: flex; gap: 16px; flex-direction: column; width: 400px; max-width: 90vw; border-radius: 14px; color: #ffffff">
       <h1 style="border: auto; text-align: center">{{ data?.title || 'Confirmation' }}</h1>
       <span>{{ data?.message || 'Confirm the action?' }}</span>
       <div style="display: flex; justify-content: space-between;  ">
