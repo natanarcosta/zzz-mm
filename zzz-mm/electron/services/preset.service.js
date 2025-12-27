@@ -61,12 +61,27 @@ function createPresetService(app) {
 
   function listPresets() {
     ensureDefaultPreset();
-    return fs
-      .readdirSync(PRESETS_DIR)
-      .filter((f) => f.endsWith(".json") && !f.startsWith("_"))
-      .map((file) =>
-        JSON.parse(fs.readFileSync(path.join(PRESETS_DIR, file), "utf-8")),
-      );
+    try {
+      const files = fs
+        .readdirSync(PRESETS_DIR)
+        .filter((f) => f.endsWith(".json") && !f.startsWith("_"));
+
+      const presets = [];
+      for (const file of files) {
+        const filePath = path.join(PRESETS_DIR, file);
+        try {
+          const data = fs.readFileSync(filePath, "utf-8");
+          presets.push(JSON.parse(data));
+        } catch (e) {
+          console.error("PRESET:READ_PRESET_ERROR", filePath, e);
+        }
+      }
+
+      return presets;
+    } catch (e) {
+      console.error("PRESET:LIST_ERROR", e);
+      return [];
+    }
   }
 
   function getActivePresetId() {
