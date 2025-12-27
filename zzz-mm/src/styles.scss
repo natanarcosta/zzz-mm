@@ -24,6 +24,22 @@
   }
 }
 
+.preset-selector {
+  .mdc-list-item__primary-text {
+    width: 100%;
+  }
+  .preset-option {
+    position: relative;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    i {
+      position: absolute;
+      right: 0;
+    }
+  }
+}
+
 /* Scrollbar minimalista */
 ::-webkit-scrollbar {
   width: 6px;

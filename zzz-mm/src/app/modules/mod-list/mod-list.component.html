@@ -37,6 +37,43 @@
       (click)="openConfigDialog()"
       matTooltip="Mod Manager Config"
     ></i>
+
+    <!-- Preset Controls -->
+    <div class="preset-controls">
+      <label>Preset:</label>
+      <mat-select
+        (valueChange)="onPresetChange($event)"
+        [value]="presetService.activePresetId()"
+        panelClass="preset-selector"
+      >
+        @for (p of presetService.presets(); track p.id) {
+          <mat-option [value]="p.id">
+            <span class="preset-option">
+              {{ p.name }}
+              <i
+                class="fa-solid fa-trash"
+                *ngIf="
+                  p.id !== presetService.activePresetId() && p.id !== 'default'
+                "
+                (click)="
+                  $event.preventDefault();
+                  $event.stopPropagation();
+                  onDeletePreset(p.id)
+                "
+              ></i>
+            </span>
+          </mat-option>
+        }
+      </mat-select>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="createPreset()"
+        matTooltip="Create new preset"
+      >
+        Create
+      </button>
+    </div>
   </section>
   @if (selectedAgent()) {
     <h1>

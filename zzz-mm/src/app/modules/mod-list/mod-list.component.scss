@@ -85,7 +85,9 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
 
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
 
     &:hover {
       transform: translateY(-4px);
@@ -94,7 +96,8 @@
 
     &.active {
       border: 2px solid var(--main-color);
-      box-shadow: 0 0 0 2px rgba(var(--main-color-rgb), 0.25),
+      box-shadow:
+        0 0 0 2px rgba(var(--main-color-rgb), 0.25),
         0 18px 48px rgba(0, 0, 0, 0.8);
     }
 
@@ -113,7 +116,9 @@
       object-fit: cover;
       position: relative;
       z-index: 1;
-      transition: transform 0.4s ease, filter 0.3s ease;
+      transition:
+        transform 0.4s ease,
+        filter 0.3s ease;
 
       &.censor {
         filter: blur(20px);
@@ -181,7 +186,10 @@
       opacity: 0;
       transform: translateY(6px);
 
-      transition: opacity 0.18s ease, transform 0.18s ease, background 0.2s ease;
+      transition:
+        opacity 0.18s ease,
+        transform 0.18s ease,
+        background 0.2s ease;
 
       i {
         font-size: 0.9rem;
@@ -335,6 +343,17 @@
     100% {
       transform: translateX(0);
       opacity: 0.4;
+    }
+  }
+
+  .preset-controls {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    font-size: 1rem;
+    mat-select {
+      min-width: 150px;
     }
   }
 }

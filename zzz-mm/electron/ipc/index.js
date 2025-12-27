@@ -5,6 +5,7 @@ const { registerConfigIpc } = require("./config.handlers");
 const { registerSystemHandlers } = require("./system.handlers");
 const { registerSymlinkIpc } = require("./symlink.handlers");
 const { registerSyncIniHandlers } = require("./sync-ini.handlers");
+const { registerPresetHandlers } = require("./preset.handlers");
 
 function registerIpcHandlers(ipcMain, services, app) {
   registerModHandlers(ipcMain, services);
@@ -18,6 +19,7 @@ function registerIpcHandlers(ipcMain, services, app) {
   });
   registerSymlinkIpc(ipcMain);
   registerSyncIniHandlers(ipcMain, services);
+  registerPresetHandlers(ipcMain, app);
 }
 
 module.exports = { registerIpcHandlers };

@@ -11,17 +11,17 @@ export interface ElectronAPI {
   downloadImage(
     url: string,
     fileName: string,
-    downloadPath: string
+    downloadPath: string,
   ): Promise<void>;
   writeJsonFile(filePath: string, data: unknown): void;
   loadConfig(): Promise<AppConfigs>;
   saveConfig(data: unknown): void;
   createSymlink(
     target: string,
-    linkPath: string
+    linkPath: string,
   ): Promise<{ success: boolean; error?: string }>;
   removeSymlink(
-    linkPath: string
+    linkPath: string,
   ): Promise<{ success: boolean; error?: string }>;
   installMod(data: unknown): Promise<{ success: boolean; error?: string }>;
   getFilePath(file: File): string;
@@ -29,11 +29,11 @@ export interface ElectronAPI {
   extractModForUpdate(
     zipPath: string,
     targetFolder: string,
-    baseModsDir: string
+    baseModsDir: string,
   ): Promise<{ success: boolean; error?: string }>;
   scanModKeys(
     modsRoot: string,
-    folderName: string
+    folderName: string,
   ): Promise<{ success: boolean; hotkeys?: ModHotkey[]; err?: any }>;
   openModFolder(payload: { modsRoot: string; folderName: string }): void;
   syncModIniFromUser(payload: {
@@ -47,6 +47,23 @@ export interface ElectronAPI {
     sourcePath: string;
     modFolderPath: string;
   }): Promise<{ success: boolean; previewPath?: string; error?: string }>;
+  // Presets
+  listPresets(): Promise<Preset[]>;
+  getActivePreset(): Promise<{ id: string; preset: Preset }>;
+  setActivePreset(
+    id: string,
+  ): Promise<{ success: boolean; id: string; preset: Preset }>;
+  createPreset(name: string): Promise<Preset>;
+  updatePresetMod(
+    modId: string,
+    enabled: boolean,
+  ): Promise<{ success: boolean; preset: Preset }>;
+  updatePresetBatch(
+    changes: Array<{ modId: string; enabled: boolean }>,
+  ): Promise<{ success: boolean; preset: Preset }>;
+  deletePreset(
+    presetId: string,
+  ): Promise<{ success: boolean; activeId?: string; preset?: Preset; error?: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -91,14 +108,14 @@ export class ElectronBridgeService {
   downloadImage(
     url: string,
     fileName: string,
-    downloadPath: string
+    downloadPath: string,
   ): Observable<void> {
     const api = this.api;
     return this.call(() => api!.downloadImage(url, fileName, downloadPath));
   }
 
   installMod(
-    payload: unknown
+    payload: unknown,
   ): Observable<{ success: boolean; error?: string }> {
     return this.call(() => this._api()!.installMod(payload));
   }
@@ -106,20 +123,20 @@ export class ElectronBridgeService {
   extractModForUpdate(
     zipPath: string,
     targetFolder: string,
-    baseModsDir: string
+    baseModsDir: string,
   ): Observable<{ success: boolean; error?: string }> {
     return this.call(() =>
-      this._api()!.extractModForUpdate(zipPath, targetFolder, baseModsDir)
+      this._api()!.extractModForUpdate(zipPath, targetFolder, baseModsDir),
     );
   }
 
   scanModKeys(
     folderName: string,
-    sourceFolder: string
+    sourceFolder: string,
   ): Observable<{ success: boolean; err?: any; hotkeys?: ModHotkey[] }> {
     return from(
       this.api?.scanModKeys(sourceFolder, folderName) ??
-        Promise.resolve({ success: false })
+        Promise.resolve({ success: false }),
     );
   }
 
@@ -133,19 +150,48 @@ export class ElectronBridgeService {
   syncModIniFromUser(
     modFolderName: string,
     d3dxUserIniPath: string,
-    modsRoot: string
+    modsRoot: string,
   ): Observable<{ success: boolean; error?: string }> {
     return this.call(() =>
       this._api()!.syncModIniFromUser({
         modFolderName,
         d3dxUserIniPath,
         modsRoot,
-      })
+      }),
     );
   }
 
   saveModPreview(payload: { sourcePath: string; modFolderPath: string }) {
     return this.call(() => this.api!.saveModPreview(payload));
+  }
+
+  // Presets
+  listPresets() {
+    return this.call(() => this.api!.listPresets());
+  }
+
+  getActivePreset() {
+    return this.call(() => this.api!.getActivePreset());
+  }
+
+  setActivePreset(id: string) {
+    return this.call(() => this.api!.setActivePreset(id));
+  }
+
+  createPreset(name: string) {
+    return this.call(() => this.api!.createPreset(name));
+  }
+
+  updatePresetMod(modId: string, enabled: boolean) {
+    return this.call(() => this.api!.updatePresetMod(modId, enabled));
+  }
+
+  updatePresetBatch(changes: Array<{ modId: string; enabled: boolean }>) {
+    return this.call(() => this.api!.updatePresetBatch(changes));
+  }
+
+  deletePreset(presetId: string) {
+    return this.call(() => this.api!.deletePreset(presetId));
   }
 
   quitApp(): void {
@@ -155,4 +201,12 @@ export class ElectronBridgeService {
   getAppVersion(): Observable<string> {
     return this.call(() => this.api!.getAppVersion());
   }
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+  mods: Record<string, boolean>;
+  createdAt: number;
+  updatedAt: number;
 }
