@@ -34,6 +34,16 @@ const IpcHandler = {
   REMOVE_SYMLINK: "remove-symlink",
 
   // =====================
+  // PRESETS
+  // =====================
+  PRESET_LIST: "preset-list",
+  PRESET_GET_ACTIVE: "preset-get-active",
+  PRESET_SET_ACTIVE: "preset-set-active",
+  PRESET_CREATE: "preset-create",
+  PRESET_UPDATE_MOD: "preset-update-mod",
+  PRESET_BATCH_UPDATE: "preset-batch-update",
+
+  // =====================
   // SYSTEM
   // =====================
   OPEN_EXTERNAL_URL: "open-external-url",

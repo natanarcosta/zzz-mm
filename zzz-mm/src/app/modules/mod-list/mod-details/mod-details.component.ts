@@ -25,7 +25,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { ConfigService } from '../../../services/config.service';
 import { MainService } from '../../../services/main.service';
 import { NotificationService } from '../../../services/notifications.service';
-import { ModManagerService } from '../../../services/mod-manager.service';
+import { PresetService } from '../../../services/preset.service';
 import {
   FormControl,
   FormGroup,
@@ -78,7 +78,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   private _modIndexService = inject(ModIndexService);
   private _mainService = inject(MainService);
   private _notify = inject(NotificationService);
-  private _modManagerService = inject(ModManagerService);
+  private _presetService = inject(PresetService);
 
   private _data: { mod: AgentMod } = inject(MAT_DIALOG_DATA);
   private _onDestroy$ = new Subject<void>();
@@ -353,25 +353,26 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const mod = this.mod();
     if (!mod) return;
 
-    await this._modManagerService.handleActivateMod(mod);
-    if (this._configService.config.disable_others) {
-      const selectedAgent = await firstValueFrom(
-        this._mainService.agentSelected,
-      );
-      if (!selectedAgent) return;
+    // Optimistic UI
+    const current = this.mod();
+    if (current?.json) {
+      this.mod.set({ ...current, json: { ...current.json, active: true } });
+      this._cdr.markForCheck();
+    }
 
-      const modIndex = this.agentMods()?.findIndex(
-        (_mod) => _mod.folderName === mod.folderName,
-      );
-      if (modIndex && modIndex < 0) return;
+    const allowedMultipleMods = [0, 1];
+    const selectedAgent = this.selectedAgent();
+    const skip = !!selectedAgent && allowedMultipleMods.includes(selectedAgent.id);
 
-      const toDisable = this.agentMods()?.filter((_, i) => i !== modIndex);
-      if (!toDisable?.length) return;
-
-      for (const disableMod of toDisable) {
-        if (!disableMod) continue;
-        await this.handleRemoveMod(disableMod);
-      }
+    if (this._configService.config.disable_others && !skip) {
+      const list = this.agentMods() ?? [];
+      const changes = list.map((m) => ({
+        modId: m.folderName,
+        enabled: m.folderName === mod.folderName,
+      }));
+      await this._presetService.updateModsBatch(changes);
+    } else {
+      await this._presetService.updateMod(mod.folderName, true);
     }
   }
 
@@ -379,7 +380,14 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     const mod = targetMod ? targetMod : this.mod();
     if (!mod) return;
 
-    await this._modManagerService.handleRemoveMod(mod);
+    // Optimistic UI
+    const current = this.mod();
+    if (current?.json) {
+      this.mod.set({ ...current, json: { ...current.json, active: false } });
+      this._cdr.markForCheck();
+    }
+
+    await this._presetService.updateMod(mod.folderName, false);
   }
 
   public handleUpdateExistindMod() {

@@ -47,6 +47,18 @@ export interface ElectronAPI {
     sourcePath: string;
     modFolderPath: string;
   }): Promise<{ success: boolean; previewPath?: string; error?: string }>;
+  // Presets
+  listPresets(): Promise<Preset[]>;
+  getActivePreset(): Promise<{ id: string; preset: Preset }>;
+  setActivePreset(id: string): Promise<{ success: boolean; id: string; preset: Preset }>;
+  createPreset(name: string): Promise<Preset>;
+  updatePresetMod(
+    modId: string,
+    enabled: boolean
+  ): Promise<{ success: boolean; preset: Preset }>;
+  updatePresetBatch(
+    changes: Array<{ modId: string; enabled: boolean }>
+  ): Promise<{ success: boolean; preset: Preset }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -148,6 +160,31 @@ export class ElectronBridgeService {
     return this.call(() => this.api!.saveModPreview(payload));
   }
 
+  // Presets
+  listPresets() {
+    return this.call(() => this.api!.listPresets());
+  }
+
+  getActivePreset() {
+    return this.call(() => this.api!.getActivePreset());
+  }
+
+  setActivePreset(id: string) {
+    return this.call(() => this.api!.setActivePreset(id));
+  }
+
+  createPreset(name: string) {
+    return this.call(() => this.api!.createPreset(name));
+  }
+
+  updatePresetMod(modId: string, enabled: boolean) {
+    return this.call(() => this.api!.updatePresetMod(modId, enabled));
+  }
+
+  updatePresetBatch(changes: Array<{ modId: string; enabled: boolean }>) {
+    return this.call(() => this.api!.updatePresetBatch(changes));
+  }
+
   quitApp(): void {
     return this._api()!.quitApp();
   }
@@ -155,4 +192,12 @@ export class ElectronBridgeService {
   getAppVersion(): Observable<string> {
     return this.call(() => this.api!.getAppVersion());
   }
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+  mods: Record<string, boolean>;
+  createdAt: number;
+  updatedAt: number;
 }

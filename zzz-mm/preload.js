@@ -48,6 +48,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getAppVersion: () => ipcRenderer.invoke(IpcHandler.GET_APP_VERSION),
   saveModPreview: (payload) =>
     ipcRenderer.invoke(IpcHandler.SAVE_MOD_PREVIEW, payload),
+  // Presets
+  listPresets: () => ipcRenderer.invoke(IpcHandler.PRESET_LIST),
+  getActivePreset: () => ipcRenderer.invoke(IpcHandler.PRESET_GET_ACTIVE),
+  setActivePreset: (id) => ipcRenderer.invoke(IpcHandler.PRESET_SET_ACTIVE, id),
+  createPreset: (name) => ipcRenderer.invoke(IpcHandler.PRESET_CREATE, name),
+  updatePresetMod: (modId, enabled) =>
+    ipcRenderer.invoke(IpcHandler.PRESET_UPDATE_MOD, { modId, enabled }),
+  updatePresetBatch: (changes) =>
+    ipcRenderer.invoke(IpcHandler.PRESET_BATCH_UPDATE, changes),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

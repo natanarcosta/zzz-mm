@@ -21,6 +21,9 @@ import { ModManagerService } from '../../services/mod-manager.service';
 import { AddModComponent } from '../add-mod/add-mod.component';
 import { AgentNamePipe } from '../../shared/agent-name.pipe';
 import { ModIndexService } from '../../services/mod-index.service';
+import { PresetService } from '../../services/preset.service';
+import { MatSelectModule } from '@angular/material/select';
+import { PresetCreateDialogComponent } from './preset-create/preset-create-dialog.component';
 
 @Component({
   selector: 'app-mod-list',
@@ -33,6 +36,7 @@ import { ModIndexService } from '../../services/mod-index.service';
     MatButtonModule,
     AgentNamePipe,
     MatTooltipModule,
+    MatSelectModule,
   ],
 })
 export class ModListComponent implements OnInit, OnDestroy {
@@ -43,6 +47,7 @@ export class ModListComponent implements OnInit, OnDestroy {
   private _configService = inject(ConfigService);
   private _modManagerService = inject(ModManagerService);
   private _modIndexService = inject(ModIndexService);
+  public presetService = inject(PresetService);
 
   public selectedAgent = signal<ZZZAgent | null>(null);
   public enableShuffleMod = computed(() => {
@@ -68,6 +73,7 @@ export class ModListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.presetService.load();
     this._mainService.agentSelected
       .pipe(takeUntil(this._onDestroy))
       .subscribe((agent) => {
@@ -80,6 +86,24 @@ export class ModListComponent implements OnInit, OnDestroy {
         this.blur.set(config.blur);
       },
     });
+  }
+
+  onPresetChange(id: string) {
+    this.presetService.setActivePreset(id);
+  }
+
+  createPreset() {
+    this._dialog
+      .open(PresetCreateDialogComponent, {
+        width: '320px',
+        disableClose: true,
+      })
+      .afterClosed()
+      .subscribe((name: string | undefined) => {
+        if (!name) return;
+
+        this.presetService.createPreset(name);
+      });
   }
 
   public openDetailsDialog(mod: AgentMod): void {
@@ -161,11 +185,23 @@ export class ModListComponent implements OnInit, OnDestroy {
     this._modIndexService.refresh();
   }
 
-  toggleMod(mod: AgentMod) {
-    if (mod.json?.active) {
-      this.handleDisableMod(mod);
+  async toggleMod(mod: AgentMod) {
+    const enabled = this.presetService.isModEnabled(mod.folderName);
+    const willEnable = !enabled;
+
+    const allowedMultipleMods = [0, 1];
+    const skip = allowedMultipleMods.includes(this.selectedAgent()!.id);
+
+    // If enabling and config says disable others, turn off others for this agent
+    if (willEnable && this._configService.config.disable_others && !skip) {
+      const mods = this.selectedAgentMods() ?? [];
+      const changes = mods.map((m) => ({
+        modId: m.folderName,
+        enabled: m.folderName === mod.folderName,
+      }));
+      await this.presetService.updateModsBatch(changes);
     } else {
-      this.handleActivateMod(mod);
+      await this.presetService.updateMod(mod.folderName, willEnable);
     }
   }
 
@@ -176,14 +212,14 @@ export class ModListComponent implements OnInit, OnDestroy {
     const randomIndex = Math.floor(Math.random() * agentMods.length);
     const randomMod = agentMods[randomIndex];
 
-    if (randomMod.json?.active) return;
-    //Enable random mod
-    await this.handleActivateMod(randomMod);
-    const toRemove = agentMods.filter((mod, i) => i !== randomIndex);
-    //Disable all other mods
-    for (const mod of toRemove) {
-      if (!mod) continue;
-      await this.handleDisableMod(mod);
-    }
+    // Skip if already active
+    if (this.presetService.isModEnabled(randomMod.folderName)) return;
+
+    // Enable picked and disable others in the same agent in batch
+    const changes = agentMods.map((m, i) => ({
+      modId: m.folderName,
+      enabled: i === randomIndex,
+    }));
+    await this.presetService.updateModsBatch(changes);
   }
 }
