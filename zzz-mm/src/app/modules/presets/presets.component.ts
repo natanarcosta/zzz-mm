@@ -11,14 +11,15 @@ import { PresetService } from '../../services/preset.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { PresetCreateDialogComponent } from '../mod-list/preset-create/preset-create-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-presets',
-  templateUrl: './presets.components.html',
+  templateUrl: './presets.component.html',
   styleUrl: './presets.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatButtonModule, MatSelectModule],
+  imports: [CommonModule, MatButtonModule, MatSelectModule, MatTooltipModule],
 })
 export class PresetsComponent implements OnInit {
   private _dialog = inject(MatDialog);
