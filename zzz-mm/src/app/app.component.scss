@@ -7,11 +7,9 @@
   width: 100%;
   position: relative;
 
-  button {
-    -webkit-app-region: no-drag;
-  }
-
   i {
+    -webkit-app-region: no-drag;
+
     position: absolute;
     right: 0;
     margin-right: 1rem;
