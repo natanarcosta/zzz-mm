@@ -362,7 +362,8 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
 
     const allowedMultipleMods = [0, 1];
     const selectedAgent = this.selectedAgent();
-    const skip = !!selectedAgent && allowedMultipleMods.includes(selectedAgent.id);
+    const skip =
+      !!selectedAgent && allowedMultipleMods.includes(selectedAgent.id);
 
     if (this._configService.config.disable_others && !skip) {
       const list = this.agentMods() ?? [];

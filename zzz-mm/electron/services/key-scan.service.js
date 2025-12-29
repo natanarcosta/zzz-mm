@@ -20,10 +20,10 @@ function scanKeysForMod(modsRoot, folderName) {
     for (const block of blocks) {
       if (!isKeySwapBlock(block.lines)) continue;
 
-      const parsed = parseKeySwapBlock(block.lines);
+      const parsed = parseKeySwapBlock(block.lines, block.name);
       if (!parsed) continue;
 
-      const sig = `${parsed.description}|${parsed.key}`;
+      const sig = `${parsed.block}|${parsed.key}`;
       if (!seen.has(sig)) {
         seen.add(sig);
         hotkeys.push(parsed);
@@ -87,7 +87,7 @@ function splitIniBlocks(content) {
 
 function isKeySwapBlock(lines) {
   return (
-    lines.some((l) => l.trim().startsWith("key")) &&
+    lines.some((l) => l.trim().toLowerCase().startsWith("key")) &&
     lines.some((l) => l.trim().startsWith("$"))
   );
 }
@@ -113,7 +113,7 @@ function extractLabel(lines) {
   return "KeySwap";
 }
 
-function parseKeySwapBlock(blockLines) {
+function parseKeySwapBlock(blockLines, blockName) {
   const keyLine = blockLines.find((l) => l.toLowerCase().startsWith("key"));
   if (!keyLine) return null;
 
@@ -124,6 +124,7 @@ function parseKeySwapBlock(blockLines) {
     description: label,
     key: normalizeKey(rawKey),
     source: "ini",
+    block: blockName,
   };
 }
 
