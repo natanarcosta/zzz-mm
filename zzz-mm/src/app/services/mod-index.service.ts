@@ -51,7 +51,7 @@ export class ModIndexService {
     const folders = await electronAPI.readFolder(config.source_mods_folder);
 
     for (const folder of folders) {
-      if (folder.endsWith('.txt')) continue;
+      if (folder.endsWith('.txt') || folder.includes('.backup')) continue;
 
       try {
         const jsonPath = `${config.source_mods_folder}\\${folder}\\mod.json`;
@@ -76,12 +76,19 @@ export class ModIndexService {
           if (!isNaN(id)) mod.id = id;
         }
 
-        // preview
         const folderFiles = await electronAPI.readFolder(
           `${config.source_mods_folder}\\${folder}`,
         );
 
-        const image = folderFiles.find((f) => /\.(png|jpe?g)$/i.test(f));
+        let image: string | undefined = folderFiles.find(
+          (i) => i.toLowerCase() === 'preview.jpg',
+        );
+
+        if (!image) {
+          image = folderFiles.find(
+            (f) => f !== 'preview.jpg' && /\.(png|jpe?g)$/i.test(f),
+          );
+        }
 
         if (image) {
           mod.previewPath = await electronAPI.loadImage(

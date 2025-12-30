@@ -14,7 +14,12 @@ function registerModHandlers(ipcMain, services) {
   });
   ipcMain.handle(IpcHandler.INSTALL_MOD, (_, payload) => installMod(payload));
   ipcMain.handle(IpcHandler.EXTRACT_MOD_UPDATE, async (_, payload) => {
-    extractModUpdate(payload);
+    try {
+      const res = await extractModUpdate(payload);
+      return res;
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   });
   ipcMain.handle(IpcHandler.SAVE_MOD_PREVIEW, (_, payload) =>
     saveModPreview(payload)

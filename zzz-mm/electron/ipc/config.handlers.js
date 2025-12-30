@@ -15,6 +15,8 @@ function registerConfigIpc(ipcMain, app) {
         auto_fetch: false,
         disable_others: true,
         user_ini_path: "",
+        show_all_active_when_empty: true,
+        delete_archive_after_install: true,
       };
 
       fs.writeFileSync(
@@ -26,7 +28,20 @@ function registerConfigIpc(ipcMain, app) {
       return defaultConfig;
     }
 
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8"));
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8"));
+    let mutated = false;
+    if (cfg.show_all_active_when_empty === undefined) {
+      cfg.show_all_active_when_empty = true;
+      mutated = true;
+    }
+    if (cfg.delete_archive_after_install === undefined) {
+      cfg.delete_archive_after_install = true;
+      mutated = true;
+    }
+    if (mutated) {
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), "utf-8");
+    }
+    return cfg;
   });
 
   ipcMain.handle(IpcHandler.SAVE_CONFIG, async (_, data) => {

@@ -55,6 +55,44 @@
               }}
             </mat-slide-toggle>
           </div>
+
+          <!-- Show all active when no agent selected -->
+          <div class="toggle-item">
+            <div class="toggle-label">
+              <span>Show active mods when no agent is selected</span>
+              <i
+                class="fa-solid fa-circle-question"
+                matTooltip="When no agent is selected, show all currently active mods instead of the empty state"
+              ></i>
+            </div>
+
+            <mat-slide-toggle formControlName="showAllActiveWhenEmpty">
+              {{
+                configsForm.get("showAllActiveWhenEmpty")?.value
+                  ? "Enabled"
+                  : "Disabled"
+              }}
+            </mat-slide-toggle>
+          </div>
+
+          <!-- Delete archive after install/update -->
+          <div class="toggle-item">
+            <div class="toggle-label">
+              <span>Delete archive after install/update</span>
+              <i
+                class="fa-solid fa-circle-question"
+                matTooltip="After a successful install or update, delete the source .zip/.rar to save disk space"
+              ></i>
+            </div>
+
+            <mat-slide-toggle formControlName="deleteArchiveAfterInstall">
+              {{
+                configsForm.get("deleteArchiveAfterInstall")?.value
+                  ? "Enabled"
+                  : "Disabled"
+              }}
+            </mat-slide-toggle>
+          </div>
         </section>
 
         <div class="field-wrapper">

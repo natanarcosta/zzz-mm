@@ -244,6 +244,7 @@ export class AddModComponent implements OnInit, OnDestroy {
             ? this._gBananaService.getGBananaImagePath(modId)
             : null,
       },
+      deleteArchiveAfter: this._config.delete_archive_after_install,
     };
 
     const gBananaData = this._gBananaData();
@@ -294,15 +295,24 @@ export class AddModComponent implements OnInit, OnDestroy {
         payload.archivePath,
         mod.folderName,
         this._config.source_mods_folder,
+        this._config.delete_archive_after_install,
       )
       .pipe(finalize(() => (this.isInstalling = false)))
       .subscribe({
         next: (result) => {
           if (result?.success) {
-            this._notify.success('Mod atualizado com sucesso');
+            const s = result.stats;
+            if (s) {
+              this._notify.success(
+                `Update concluído: ${s.updated} atualizado(s), ${s.added} novo(s), total ${s.total}`,
+              );
+            } else {
+              this._notify.success('Mod atualizado com sucesso');
+            }
             this._dialogRef.close(true);
           } else {
-            this._notify.error('Falha no update: ' + result?.error);
+            const msg = result?.error || 'Falha no update';
+            this._notify.error('Falha no update: ' + msg);
           }
         },
       });

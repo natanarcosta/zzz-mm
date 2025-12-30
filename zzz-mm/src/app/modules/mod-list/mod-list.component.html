@@ -38,21 +38,25 @@
       matTooltip="Mod Manager Config"
     ></i>
   </section>
-  @if (selectedAgent()) {
+  @if (selectedAgent() || showAllActiveWhenEmpty()) {
     <h1>
-      {{ selectedAgent()!.name | agentName }} mods
-      <span class="count">{{ selectedAgentMods()?.length }}</span>
+      {{
+        selectedAgent()
+          ? (selectedAgent()!.name | agentName) + ' mods'
+          : 'Active mods'
+      }}
+      <span class="count">{{ displayedMods()?.length || 0 }}</span>
     </h1>
     <section class="list-wrapper">
-      @for (mod of selectedAgentMods(); track mod.folderName) {
-        <div class="mod-card" [ngClass]="{ active: mod.json?.active }">
+      @for (mod of displayedMods(); track mod.folderName) {
+        <div
+          class="mod-card"
+          [ngClass]="{ active: mod.json?.active, broken: mod.json?.broken }"
+        >
           <div class="image">
             <img
-              [ngClass]="{ censor: blur() }"
-              [src]="
-                mod.previewPath ||
-                'assets/char-portraits/' + selectedAgent()!.id + '.png'
-              "
+              [ngClass]="{ censor: blur(), grayscale: mod.json?.broken }"
+              [src]="mod.previewPath || (selectedAgent() ? 'assets/char-portraits/' + selectedAgent()!.id + '.png' : getPortraitForMod(mod))"
             />
 
             <!-- OVERLAY -->
@@ -61,8 +65,15 @@
                 class="action primary"
                 [ngClass]="{ danger: mod.json?.active }"
                 (click)="toggleMod(mod); $event.stopPropagation()"
+                [disabled]="mod.json?.broken"
               >
-                {{ mod.json?.active ? "Disable" : "Activate" }}
+                {{
+                  mod.json?.broken
+                    ? "Broken"
+                    : mod.json?.active
+                    ? "Disable"
+                    : "Activate"
+                }}
               </button>
 
               <button
@@ -75,11 +86,14 @@
           </div>
 
           <div class="content">
-            {{ mod.json?.modName || mod.folderName }}
+            <span class="truncate">{{ mod.json?.modName || mod.folderName }}</span>
+            @if (mod.json?.broken) {
+              <span class="badge broken">Broken</span>
+            }
           </div>
         </div>
       } @empty {
-        Agente não possue mods.
+        No active mods.
       }
     </section>
   } @else {

@@ -19,6 +19,7 @@ export interface ModJson {
   url: string;
   hotkeys: Array<ModHotkey>;
   active: boolean;
+  broken?: boolean;
   updatedAt?: string;
 
   localInstalledAt: string;

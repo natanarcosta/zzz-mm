@@ -101,6 +101,13 @@
         0 18px 48px rgba(0, 0, 0, 0.8);
     }
 
+    &.broken {
+      border: 2px solid #e53935;
+      box-shadow:
+        0 0 0 2px rgba(229, 57, 53, 0.25),
+        0 18px 48px rgba(0, 0, 0, 0.8);
+    }
+
     /* =========================
        IMAGE + OVERLAY
     ========================= */
@@ -122,6 +129,10 @@
 
       &.censor {
         filter: blur(20px);
+      }
+
+      &.grayscale {
+        filter: grayscale(1) contrast(0.8);
       }
     }
 
@@ -252,6 +263,16 @@
         overflow: hidden;
         text-overflow: ellipsis;
         transition: color 0.2s ease;
+      }
+
+      .badge.broken {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: rgba(229, 57, 53, 0.18);
+        color: #ff8a80;
       }
     }
 
