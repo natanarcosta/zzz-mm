@@ -14,6 +14,8 @@ export interface ElectronAPI {
     downloadPath: string,
   ): Promise<void>;
   writeJsonFile(filePath: string, data: unknown): void;
+  folderSize(folderPath: string): Promise<{ success: boolean; size?: number; error?: string }>;
+  deleteFolder(folderPath: string): Promise<{ success: boolean; error?: string }>;
   loadConfig(): Promise<AppConfigs>;
   saveConfig(data: unknown): void;
   createSymlink(
@@ -30,6 +32,7 @@ export interface ElectronAPI {
     zipPath: string,
     targetFolder: string,
     baseModsDir: string,
+    deleteArchiveAfter: boolean,
   ): Promise<{ success: boolean; error?: string }>;
   scanModKeys(
     modsRoot: string,
@@ -124,9 +127,19 @@ export class ElectronBridgeService {
     zipPath: string,
     targetFolder: string,
     baseModsDir: string,
-  ): Observable<{ success: boolean; error?: string }> {
+    deleteArchiveAfter: boolean,
+  ): Observable<{
+    success: boolean;
+    error?: string;
+    stats?: { updated: number; added: number; total: number };
+  }> {
     return this.call(() =>
-      this._api()!.extractModForUpdate(zipPath, targetFolder, baseModsDir),
+      this._api()!.extractModForUpdate(
+        zipPath,
+        targetFolder,
+        baseModsDir,
+        deleteArchiveAfter,
+      ),
     );
   }
 
@@ -200,6 +213,14 @@ export class ElectronBridgeService {
 
   getAppVersion(): Observable<string> {
     return this.call(() => this.api!.getAppVersion());
+  }
+
+  folderSize(folderPath: string): Observable<{ success: boolean; size?: number; error?: string }> {
+    return this.call(() => this.api!.folderSize(folderPath));
+  }
+
+  deleteFolder(folderPath: string): Observable<{ success: boolean; error?: string }> {
+    return this.call(() => this.api!.deleteFolder(folderPath));
   }
 }
 

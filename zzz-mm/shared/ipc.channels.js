@@ -11,6 +11,8 @@ const IpcHandler = {
   READ_FOLDER: "read-folder",
   READ_JSON_FILE: "read-json-file",
   WRITE_JSON_FILE: "write-json-file",
+  FOLDER_SIZE: "folder-size",
+  DELETE_FOLDER: "delete-folder",
 
   // =====================
   // IMAGE / PREVIEW

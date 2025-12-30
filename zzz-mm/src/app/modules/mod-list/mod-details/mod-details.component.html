@@ -6,7 +6,11 @@
         [src]="previewUrl() || imageUrl()"
         loading="lazy"
         decoding="async"
-        [ngClass]="{ censor: blur(), dragging: isDragging }"
+        [ngClass]="{
+          censor: blur(),
+          dragging: isDragging,
+          grayscale: mod.json?.broken,
+        }"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
@@ -39,12 +43,46 @@
 
       <span
         class="status"
-        [class.active]="mod?.json?.active"
-        [class.inactive]="!mod?.json?.active"
+        [class.active]="mod?.json?.active && !mod?.json?.broken"
+        [class.inactive]="!mod?.json?.active && !mod?.json?.broken"
+        [class.broken]="mod?.json?.broken"
       >
-        {{ mod.json?.active ? "Active" : "Inactive" }}
+        {{
+          mod.json?.broken
+            ? "Broken"
+            : mod.json?.active
+              ? "Active"
+              : "Inactive"
+        }}
       </span>
+      <div class="header-actions">
+        <button mat-icon-button [matMenuTriggerFor]="moreMenu" aria-label="More actions">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <button mat-icon-button (click)="closeDialog()" aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
     </header>
+
+    <mat-menu #moreMenu="matMenu">
+      <button mat-menu-item (click)="toggleBroken()" [disabled]="isTogglingBroken()">
+        <mat-icon>{{ mod.json?.broken ? 'build' : 'priority_high' }}</mat-icon>
+        <span>{{ mod.json?.broken ? 'Fixed' : 'Broken' }}</span>
+      </button>
+      <button mat-menu-item (click)="scanKeys()">
+        <mat-icon>keyboard</mat-icon>
+        <span>Detect keybinds</span>
+      </button>
+      <button mat-menu-item (click)="handleUpdateExistindMod()" [disabled]="mod.json?.active">
+        <mat-icon>file_upload</mat-icon>
+        <span>Update</span>
+      </button>
+      <button mat-menu-item (click)="handleDeleteMod()" [disabled]="mod.json?.active">
+        <mat-icon>delete_forever</mat-icon>
+        <span>Delete</span>
+      </button>
+    </mat-menu>
 
     <!--  UPDATE  -->
     @if (hasUpdate()) {
@@ -140,7 +178,13 @@
           }}</strong>
         </div>
 
-        <div class="item full">
+        <div class="item">
+          <i class="fa-solid fa-hard-drive"></i>
+          <span>Folder size</span>
+          <strong>{{ formattedFolderSize() || '...' }}</strong>
+        </div>
+
+        <div class="item full url-row">
           <i class="fa-solid fa-link"></i>
           <span>URL</span>
           <strong class="link" (click)="handleOpenExternalUrl()">
@@ -208,9 +252,16 @@
         class="primary-action"
         color="{{ mod.json?.active ? 'warn' : 'primary' }}"
         (click)="mod.json?.active ? handleRemoveMod() : handleActivateMod()"
+        [disabled]="mod.json?.broken"
         *ngIf="!editMode()"
       >
-        {{ mod.json?.active ? "Disable" : "Activate" }}
+        {{
+          mod.json?.broken
+            ? "Broken"
+            : mod.json?.active
+              ? "Disable"
+              : "Activate"
+        }}
       </button>
 
       <button
@@ -259,20 +310,6 @@
         Sync mod state
       </button>
     </div>
-
-    <!-- SECONDARY / OCCASIONAL -->
-    <div class="main-actions">
-      <button mat-stroked-button (click)="scanKeys()">
-        <i class="fa-regular fa-keyboard"></i> Detect keybinds
-      </button>
-
-      <button mat-stroked-button (click)="handleUpdateExistindMod()">
-        <i class="fa-solid fa-file-pen"></i>
-        Update
-      </button>
-      <button mat-stroked-button (click)="closeDialog()">
-        <i class="fa-solid fa-xmark"></i> Close
-      </button>
-    </div>
+    <!-- Secondary actions moved to header menu -->
   </section>
 </main>

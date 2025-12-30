@@ -66,6 +66,8 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     autoFetch: new FormControl(),
     disableOthers: new FormControl(),
     userIniPath: new FormControl(),
+    showAllActiveWhenEmpty: new FormControl(),
+    deleteArchiveAfterInstall: new FormControl(),
   });
 
   ngOnDestroy(): void {
@@ -86,6 +88,8 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           autoFetch: config.auto_fetch,
           disableOthers: config.disable_others,
           userIniPath: config.user_ini_path,
+          showAllActiveWhenEmpty: config.show_all_active_when_empty,
+          deleteArchiveAfterInstall: config.delete_archive_after_install,
         });
         this._cdr.markForCheck();
       },
@@ -109,6 +113,10 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       auto_fetch: this.configsForm.controls.autoFetch.value,
       disable_others: this.configsForm.controls.disableOthers.value,
       user_ini_path: this.configsForm.controls.userIniPath.value,
+      show_all_active_when_empty:
+        this.configsForm.controls.showAllActiveWhenEmpty.value,
+      delete_archive_after_install:
+        this.configsForm.controls.deleteArchiveAfterInstall.value,
     };
     this._configService.updateConfig({ ...config });
     this.closeDialog();

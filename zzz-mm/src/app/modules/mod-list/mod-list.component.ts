@@ -23,8 +23,6 @@ import { AgentNamePipe } from '../../shared/agent-name.pipe';
 import { ModIndexService } from '../../services/mod-index.service';
 import { PresetService } from '../../services/preset.service';
 import { MatSelectModule } from '@angular/material/select';
-import { PresetCreateDialogComponent } from './preset-create/preset-create-dialog.component';
-import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-mod-list',
@@ -51,13 +49,16 @@ export class ModListComponent implements OnInit, OnDestroy {
   private _presetService = inject(PresetService);
 
   public selectedAgent = signal<ZZZAgent | null>(null);
+  public showAllActiveWhenEmpty = signal<boolean>(true);
+  private _agentNameToId = signal<Map<string, number>>(new Map());
   public enableShuffleMod = computed(() => {
     const selectedAgent = this.selectedAgent();
     if (!selectedAgent) return false;
     const mods = this.selectedAgentMods();
     if (!mods?.length) return false;
 
-    return mods.length > 1;
+    const eligible = mods.filter((m) => !m.json?.broken);
+    return eligible.length > 1;
   });
   public blur = signal<boolean>(false);
 
@@ -66,6 +67,24 @@ export class ModListComponent implements OnInit, OnDestroy {
     if (!agent) return;
 
     return this._modIndexService.modsByAgent().get(agent.name);
+  });
+
+  allActiveMods = computed<AgentMod[]>(() => {
+    const map = this._modIndexService.modsByAgent();
+    const list: AgentMod[] = [];
+    for (const [, mods] of map.entries()) {
+      for (const m of mods) {
+        if (m.json?.active && !m.json?.broken) list.push(m);
+      }
+    }
+    return list;
+  });
+
+  displayedMods = computed<AgentMod[] | undefined>(() => {
+    const agent = this.selectedAgent();
+    if (agent) return this.selectedAgentMods() ?? [];
+    if (this.showAllActiveWhenEmpty()) return this.allActiveMods();
+    return undefined;
   });
 
   ngOnDestroy(): void {
@@ -81,9 +100,18 @@ export class ModListComponent implements OnInit, OnDestroy {
         this._cdr.markForCheck();
       });
 
+    this._mainService.agents$
+      .pipe(takeUntil(this._onDestroy))
+      .subscribe((agents) => {
+        const map = new Map<string, number>();
+        for (const a of agents) map.set(a.name, a.id);
+        this._agentNameToId.set(map);
+      });
+
     this._configService.configReady.subscribe({
       next: (config) => {
         this.blur.set(config.blur);
+        this.showAllActiveWhenEmpty.set(config.show_all_active_when_empty);
       },
     });
   }
@@ -168,15 +196,25 @@ export class ModListComponent implements OnInit, OnDestroy {
   }
 
   async toggleMod(mod: AgentMod) {
+    if (mod.json?.broken) return;
     const enabled = this._presetService.isModEnabled(mod.folderName);
     const willEnable = !enabled;
 
+    // Determine mods for the same agent as 'mod'
+    const agentKey = mod.json?.character?.toLowerCase().replaceAll(' ', '-');
+    const sameAgentMods = agentKey
+      ? (this._modIndexService.modsByAgent().get(agentKey) ?? [])
+      : [];
+
     const allowedMultipleMods = [0, 1];
-    const skip = allowedMultipleMods.includes(this.selectedAgent()!.id);
+    const currentAgent = this.selectedAgent();
+    const skip = currentAgent
+      ? allowedMultipleMods.includes(currentAgent.id)
+      : false;
 
     // If enabling and config says disable others, turn off others for this agent
     if (willEnable && this._configService.config.disable_others && !skip) {
-      const mods = this.selectedAgentMods() ?? [];
+      const mods = sameAgentMods ?? [];
       const changes = mods.map((m) => ({
         modId: m.folderName,
         enabled: m.folderName === mod.folderName,
@@ -191,17 +229,28 @@ export class ModListComponent implements OnInit, OnDestroy {
     const agentMods = this.selectedAgentMods();
     if (!agentMods?.length) return;
 
-    const randomIndex = Math.floor(Math.random() * agentMods.length);
-    const randomMod = agentMods[randomIndex];
+    const pool = agentMods.filter((m) => !m.json?.broken);
+    if (!pool.length) return;
+
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const randomMod = pool[randomIndex];
 
     // Skip if already active
     if (this._presetService.isModEnabled(randomMod.folderName)) return;
 
     // Enable picked and disable others in the same agent in batch
-    const changes = agentMods.map((m, i) => ({
+    const changes = agentMods.map((m) => ({
       modId: m.folderName,
-      enabled: i === randomIndex,
+      enabled: m.folderName === randomMod.folderName,
     }));
     await this._presetService.updateModsBatch(changes);
+  }
+
+  public getPortraitForMod(mod: AgentMod): string | undefined {
+    const character = mod.json?.character;
+    if (!character) return undefined;
+    const id = this._agentNameToId().get(character);
+    if (typeof id === 'number') return `assets/char-portraits/${id}.png`;
+    return undefined;
   }
 }

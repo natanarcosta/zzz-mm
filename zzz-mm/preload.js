@@ -17,6 +17,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }),
   writeJsonFile: (filePath, data) =>
     ipcRenderer.invoke(IpcHandler.WRITE_JSON_FILE, { filePath, data }),
+  folderSize: (folderPath) =>
+    ipcRenderer.invoke(IpcHandler.FOLDER_SIZE, folderPath),
+  deleteFolder: (folderPath) =>
+    ipcRenderer.invoke(IpcHandler.DELETE_FOLDER, folderPath),
   loadConfig: () => ipcRenderer.invoke(IpcHandler.LOAD_CONFIG),
   saveConfig: (data) => ipcRenderer.invoke(IpcHandler.SAVE_CONFIG, data),
   createSymlink: (target, linkPath) =>
@@ -27,11 +31,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getFilePath: (file) => webUtils.getPathForFile(file),
   selectDirectory: (options) =>
     ipcRenderer.invoke(IpcHandler.SELECT_DIRECTORY, options),
-  extractModForUpdate: (zipPath, targetFolder, baseModsDir) =>
+  extractModForUpdate: (zipPath, targetFolder, baseModsDir, deleteArchiveAfter) =>
     ipcRenderer.invoke(IpcHandler.EXTRACT_MOD_UPDATE, {
       zipPath,
       targetFolder,
       baseModsDir,
+      deleteArchiveAfter,
     }),
   scanModKeys: (modsRoot, folderName) =>
     ipcRenderer.invoke(IpcHandler.SCAN_MOD_KEYS, { modsRoot, folderName }),

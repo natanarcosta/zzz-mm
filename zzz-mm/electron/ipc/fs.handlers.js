@@ -39,6 +39,49 @@ function registerFsIpc(ipcMain) {
       return { success: false, error: err.message };
     }
   });
+
+  ipcMain.handle(IpcHandler.FOLDER_SIZE, async (_, folderPath) => {
+    function getSize(p) {
+      try {
+        const stat = fs.statSync(p);
+        if (stat.isFile()) return stat.size;
+        if (stat.isDirectory()) {
+          let total = 0;
+          const entries = fs.readdirSync(p, { withFileTypes: true });
+          for (const e of entries) {
+            const child = path.join(p, e.name);
+            total += getSize(child);
+          }
+          return total;
+        }
+        return 0;
+      } catch {
+        return 0;
+      }
+    }
+
+    try {
+      const size = getSize(folderPath);
+      return { success: true, size };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle(IpcHandler.DELETE_FOLDER, async (_, folderPath) => {
+    try {
+      if (!folderPath || typeof folderPath !== "string") {
+        return { success: false, error: "Invalid folder path" };
+      }
+      if (!fs.existsSync(folderPath)) {
+        return { success: true };
+      }
+      fs.rmSync(folderPath, { recursive: true, force: true });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
 }
 
 module.exports = { registerFsIpc };

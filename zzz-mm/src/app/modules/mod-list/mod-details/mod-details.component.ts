@@ -49,6 +49,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AgentNamePipe } from '../../../shared/agent-name.pipe';
 import { MatIconModule } from '@angular/material/icon';
 import { ModIndexService } from '../../../services/mod-index.service';
+import { MatMenuModule } from '@angular/material/menu';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-mod-details',
@@ -68,6 +70,7 @@ import { ModIndexService } from '../../../services/mod-index.service';
     MatProgressBarModule,
     AgentNamePipe,
     MatIconModule,
+    MatMenuModule,
   ],
 })
 export class ModDetailsComponent implements OnInit, OnDestroy {
@@ -107,6 +110,8 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
   file: File | null = null;
   filePath: string | null = null;
   public previewUrl = signal<string | null>(null);
+  public isTogglingBroken = signal<boolean>(false);
+  public folderSizeBytes = signal<number | null>(null);
 
   public hasGameBananaUrl = computed(() => {
     const url = this.mod()?.json?.url;
@@ -124,9 +129,41 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     if (mod.json?.url?.includes('gamebanana') && mod.id) {
       return this._gBananaService.getGBananaImagePath(mod.id);
     }
-
     return '';
   });
+
+  async handleDeleteMod() {
+    const mod = this.mod();
+    if (!mod) return;
+    if (mod.json?.active) {
+      this._notify.error('Disable the mod before deleting.');
+      return;
+    }
+
+    const ref = this._dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Delete mod',
+        message:
+          'This action will permanently delete the mod folder from disk. This cannot be undone. Do you want to continue?',
+      },
+      width: '480px',
+      disableClose: true,
+    });
+
+    ref.afterClosed().subscribe(async (confirmed: boolean) => {
+      if (!confirmed) return;
+      const root = this._configService.config.source_mods_folder;
+      const folderPath = `${root}\\${mod.folderName}`;
+      const res = await this._electronBridge.deleteFolder(folderPath).toPromise();
+      if (!res?.success) {
+        this._notify.error('Failed to delete mod folder' + (res?.error ? `: ${res.error}` : ''));
+        return;
+      }
+      await this._modIndexService.refresh();
+      this._notify.success('Mod deleted successfully');
+      this._ref.close(true);
+    });
+  }
 
   agentMods = computed(() => {
     const agent = this.selectedAgent();
@@ -183,6 +220,8 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       description: mod.json?.description,
       url: mod.json?.url,
     });
+
+    this.loadFolderSize();
   }
 
   displayFn(character: ZZZAgent): string {
@@ -221,6 +260,39 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       this.mod()?.folderName;
 
     return diskPath;
+  }
+
+  private loadFolderSize() {
+    const api = this.electronAPI;
+    const path = this.modFolderPath;
+    if (!api || !path) return;
+
+    this._electronBridge
+      .folderSize(path)
+      .pipe(takeUntil(this._onDestroy$))
+      .subscribe({
+        next: (res) => {
+          if (res.success && typeof res.size === 'number') {
+            this.folderSizeBytes.set(res.size);
+            this._cdr.markForCheck();
+          }
+        },
+      });
+  }
+
+  public formattedFolderSize(): string {
+    const bytes = this.folderSizeBytes();
+    if (bytes == null) return '';
+    const thresh = 1024;
+    if (bytes < thresh) return bytes + ' B';
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    let u = -1;
+    let size = bytes;
+    do {
+      size /= thresh;
+      ++u;
+    } while (size >= thresh && u < units.length - 1);
+    return size.toFixed(size < 10 ? 1 : 0) + ' ' + units[u];
   }
 
   handleSaveEdit(): void {
@@ -349,9 +421,41 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     this._notify.success('Mod data saved successfully');
   }
 
+  async toggleBroken() {
+    const current = this.mod();
+    if (!current || !current.json) return;
+
+    const wasBroken = !!current.json.broken;
+    const nextBroken = !wasBroken;
+
+    // Optimistic UI update
+    const nextJson: ModJson = {
+      ...current.json,
+      broken: nextBroken,
+      // if marking broken, force inactive visually
+      active: nextBroken ? false : current.json.active,
+    } as ModJson;
+    this.mod.set({ ...current, json: nextJson });
+    this._cdr.markForCheck();
+
+    // If marking as broken, disable in preset immediately
+    try {
+      this.isTogglingBroken.set(true);
+      if (nextBroken) {
+        await this._presetService.updateMod(current.folderName, false);
+      }
+    } finally {
+      this.isTogglingBroken.set(false);
+    }
+
+    // Persist to mod.json
+    this.handleSaveMetadata();
+  }
+
   async handleActivateMod() {
     const mod = this.mod();
     if (!mod) return;
+    if (mod.json?.broken) return;
 
     // Optimistic UI
     const current = this.mod();

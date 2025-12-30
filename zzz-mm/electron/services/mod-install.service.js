@@ -31,7 +31,7 @@ function createModInstaller({ isDev, sanitizeFolderName, scanKeysForMod }) {
     }
   }
 
-  async function installMod({ archivePath, destinationPath, modData }) {
+  async function installMod({ archivePath, destinationPath, modData, deleteArchiveAfter }) {
     const tempDir = path.join(os.tmpdir(), "zzz-mm", "install_" + Date.now());
 
     try {
@@ -114,6 +114,9 @@ function createModInstaller({ isDev, sanitizeFolderName, scanKeysForMod }) {
         "utf-8"
       );
 
+      // Optionally delete source archive after success
+      if (deleteArchiveAfter) fs.rmSync(archivePath, { force: true });
+
       return { success: true };
     } catch (err) {
       console.error("INSTALL MOD ERROR:", err);
@@ -123,14 +126,122 @@ function createModInstaller({ isDev, sanitizeFolderName, scanKeysForMod }) {
     }
   }
 
-  async function extractModUpdate({ zipPath, targetFolder, baseModsDir }) {
+  async function extractModUpdate({ zipPath, targetFolder, baseModsDir, deleteArchiveAfter }) {
     const targetPath = path.join(baseModsDir, targetFolder);
     const tempDir = path.join(os.tmpdir(), "zzz-mm", "install_" + Date.now());
+
+    // Relevantes para mods (texturas/configs)
+    const relevantExts = new Set([".ini", ".dds", ".ib", ".buf"]);
+
+    function isRelevantFile(filePath) {
+      return relevantExts.has(path.extname(filePath).toLowerCase());
+    }
+
+    function listFilesRecursive(baseDir) {
+      const results = [];
+      const stack = [""];
+      while (stack.length) {
+        const rel = stack.pop();
+        const abs = path.join(baseDir, rel);
+        const entries = fs.readdirSync(abs, { withFileTypes: true });
+        for (const e of entries) {
+          const nextRel = path.join(rel, e.name);
+          const nextAbs = path.join(baseDir, nextRel);
+          if (e.isDirectory()) {
+            stack.push(nextRel);
+          } else if (e.isFile()) {
+            results.push({ relPath: nextRel, absPath: nextAbs });
+          }
+        }
+      }
+      return results;
+    }
+
+    function findBestContentDir(rootDir) {
+      // varre todas as pastas e escolhe a que possui mais arquivos relevantes
+      let bestDir = rootDir;
+      let bestCount = 0;
+      const stack = [rootDir];
+      while (stack.length) {
+        const dir = stack.pop();
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        let relCount = 0;
+        for (const e of entries) {
+          if (e.isDirectory()) stack.push(path.join(dir, e.name));
+          else if (e.isFile() && isRelevantFile(e.name)) relCount++;
+        }
+        if (relCount > bestCount) {
+          bestCount = relCount;
+          bestDir = dir;
+        }
+      }
+      return bestDir;
+    }
+
+    function ensureDir(p) {
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+    }
+
+    // =========================
+    // INI Constants Merge Helpers
+    // =========================
+    function _findConstantsBlock(content) {
+      // Locate [Constants] section boundaries
+      const sectionRegex = /^\s*\[(.+?)\]\s*$/gmi;
+      let match;
+      let constantsStart = -1;
+      let nextStart = content.length;
+      while ((match = sectionRegex.exec(content)) !== null) {
+        const name = match[1].trim();
+        if (name.toLowerCase() === 'constants') {
+          constantsStart = match.index;
+          // find next section start after this match
+          nextStart = content.length;
+          while ((match = sectionRegex.exec(content)) !== null) {
+            nextStart = match.index;
+            break;
+          }
+          break;
+        }
+      }
+      if (constantsStart < 0) return null;
+      const startIdx = constantsStart;
+      const endIdx = nextStart;
+      const block = content.slice(startIdx, endIdx);
+
+      // Extract variable names inside block using pattern like: global persist $var = value
+      const varRegex = /^\s*global\s+persist\s+\$?([A-Za-z0-9_-]+)\s*=.*$/gmi;
+      const keys = new Set();
+      let m;
+      while ((m = varRegex.exec(block)) !== null) {
+        keys.add(m[1]);
+      }
+      return { startIdx, endIdx, block, keys };
+    }
+
+    function _tryMergeIniConstants(oldContent, newContent) {
+      const oldBlk = _findConstantsBlock(oldContent);
+      const newBlk = _findConstantsBlock(newContent);
+      if (!oldBlk || !newBlk) return null;
+
+      // Compare schema by variable names set
+      if (oldBlk.keys.size !== newBlk.keys.size) return null;
+      for (const k of oldBlk.keys) {
+        if (!newBlk.keys.has(k)) return null;
+      }
+
+      // Replace the new block with the old block (preserve user-synced values)
+      const merged =
+        newContent.slice(0, newBlk.startIdx) +
+        oldBlk.block +
+        newContent.slice(newBlk.endIdx);
+      return merged;
+    }
 
     try {
       fs.mkdirSync(tempDir, { recursive: true });
 
-      // 1) extrair
+      // 1) extrair para temp
       const ext = path.extname(zipPath).toLowerCase();
       if (ext === ".zip") {
         await extractZip(zipPath, tempDir);
@@ -140,33 +251,87 @@ function createModInstaller({ isDev, sanitizeFolderName, scanKeysForMod }) {
         throw new Error("Formato não suportado");
       }
 
-      // 2) detectar raiz real do update
-      const root = unwrapSingleFolder(tempDir);
+      // 2) detectar raiz real do update e pasta de conteudo
+      const extractedRoot = unwrapSingleFolder(tempDir);
+      const srcContentDir = findBestContentDir(extractedRoot);
 
-      const updateEntries = fs.readdirSync(root);
-      if (updateEntries.length === 0) {
-        throw new Error("Pacote de update vazio");
+      // 3) detectar pasta de conteúdo de destino (ex: subpasta cheias de .dds/.ini)
+      let destContentDir = targetPath;
+      try {
+        destContentDir = findBestContentDir(targetPath);
+      } catch {
+        destContentDir = targetPath;
       }
 
-      // 3) copiar arquivos do update (merge)
-      for (const file of updateEntries) {
-        const src = path.join(root, file);
-        const dest = path.join(targetPath, file);
+      // 4) listar arquivos relevantes a copiar
+      const srcFiles = listFilesRecursive(srcContentDir).filter((f) =>
+        isRelevantFile(f.relPath)
+      );
 
-        fs.cpSync(src, dest, {
-          recursive: true,
-          force: true, // sobrescreve se existir
-        });
+      if (srcFiles.length === 0) {
+        return { success: false, error: "Nenhum arquivo relevante encontrado no update" };
       }
 
-      // 4) copiar novos arquivos
-      for (const file of updateEntries) {
-        fs.cpSync(path.join(root, file), path.join(targetPath, file), {
-          recursive: true,
-        });
+      // 5) criar pasta de backup para arquivos que serão sobrescritos
+      const backupRoot = path.join(
+        baseModsDir,
+        ".backup",
+        targetFolder,
+        String(Date.now())
+      );
+      fs.mkdirSync(backupRoot, { recursive: true });
+
+      let updated = 0;
+      let added = 0;
+
+      for (const f of srcFiles) {
+        const destFile = path.join(destContentDir, f.relPath);
+        // backup se destino existir
+        if (fs.existsSync(destFile)) {
+          const backupFile = path.join(backupRoot, path.relative(destContentDir, destFile));
+          ensureDir(backupFile);
+          fs.copyFileSync(destFile, backupFile);
+          updated++;
+        } else {
+          added++;
+        }
+        ensureDir(destFile);
+        const ext = path.extname(f.relPath).toLowerCase();
+        let wrote = false;
+        if (ext === '.ini' && fs.existsSync(destFile)) {
+          try {
+            const prevContent = fs.readFileSync(destFile, 'utf-8');
+            const newContent = fs.readFileSync(f.absPath, 'utf-8');
+            const merged = _tryMergeIniConstants(prevContent, newContent);
+            if (merged) {
+              fs.writeFileSync(destFile, merged, 'utf-8');
+              wrote = true;
+            }
+          } catch {
+            // fallback to regular copy
+          }
+        }
+        if (!wrote) {
+          fs.copyFileSync(f.absPath, destFile);
+        }
       }
 
-      return { success: true };
+      // 6) atualizar timestamp do mod.json (para invalidar cache e registrar update)
+      try {
+        const modJsonPath = path.join(targetPath, "mod.json");
+        if (fs.existsSync(modJsonPath)) {
+          const json = JSON.parse(fs.readFileSync(modJsonPath, "utf-8"));
+          json.localUpdatedAt = new Date().toISOString();
+          fs.writeFileSync(modJsonPath, JSON.stringify(json, null, 2), "utf-8");
+        }
+      } catch (e) {
+        console.warn("Falha ao atualizar mod.json:", e.message);
+      }
+
+      // Optionally delete update archive after success
+      if (deleteArchiveAfter) fs.rmSync(zipPath, { force: true });
+
+      return { success: true, stats: { updated, added, total: srcFiles.length } };
     } catch (err) {
       console.error("EXTRACT_MOD_UPDATE_ERROR:", err);
       return { success: false, error: err.message };

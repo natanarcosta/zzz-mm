@@ -12,6 +12,8 @@ export interface AppConfigs {
   auto_fetch: boolean;
   disable_others: boolean;
   user_ini_path: string;
+  show_all_active_when_empty: boolean;
+  delete_archive_after_install: boolean;
 }
 
 @Injectable({
