@@ -1,7 +1,7 @@
 {
   "name": "zzz-mm",
   "main": "main.js",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "natanarcosta",
   "description": "Ava's ZZZ Mod Manager",
   "scripts": {
