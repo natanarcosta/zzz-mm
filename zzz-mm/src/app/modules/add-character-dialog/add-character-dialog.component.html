@@ -1,0 +1,44 @@
+<main id="add-character-dialog">
+  <section class="header">
+    <h1>Add Character</h1>
+  </section>
+
+  <section class="content">
+    <form [formGroup]="form">
+      <mat-form-field appearance="fill">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" />
+      </mat-form-field>
+
+      <div class="file-row">
+        <div class="file-controls">
+          <label class="file-picker" for="character-image">
+            <input
+              id="character-image"
+              type="file"
+              accept="image/*"
+              (change)="handleFileSelected($event)"
+            />
+            Choose image
+          </label>
+          <span class="file-name">
+            {{ imageFileName ?? 'No file selected' }}
+          </span>
+        </div>
+
+        @if (imagePreviewUrl) {
+          <div class="image-preview">
+            <img [src]="imagePreviewUrl" />
+          </div>
+        }
+      </div>
+    </form>
+  </section>
+
+  <section class="actions">
+    <button mat-flat-button color="primary" [disabled]="isSaving()" (click)="save()">
+      Save
+    </button>
+    <button mat-button (click)="closeDialog()">Cancel</button>
+  </section>
+</main>

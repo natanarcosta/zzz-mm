@@ -26,6 +26,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Subject, takeUntil } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ElectronBridgeService } from '../../services/electron-bridge.service';
+import { MatDialog } from '@angular/material/dialog';
+import { AddCharacterDialogComponent } from '../add-character-dialog/add-character-dialog.component';
+import { MainService } from '../../services/main.service';
 
 @Component({
   selector: 'app-config-dialog',
@@ -54,6 +57,8 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
   private _modManagerService = inject(ModManagerService);
   private _onDestroy = new Subject<void>();
   private _electronBridge = inject(ElectronBridgeService);
+  private _dialog = inject(MatDialog);
+  private _mainService = inject(MainService);
 
   public symLinkSyncProgress = signal(0);
   public appVersion = signal<string | null>(null);
@@ -67,6 +72,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     disableOthers: new FormControl(),
     userIniPath: new FormControl(),
     showAllActiveWhenEmpty: new FormControl(),
+    showAgentsWithoutMods: new FormControl(),
     deleteArchiveAfterInstall: new FormControl(),
   });
 
@@ -89,6 +95,7 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
           disableOthers: config.disable_others,
           userIniPath: config.user_ini_path,
           showAllActiveWhenEmpty: config.show_all_active_when_empty,
+          showAgentsWithoutMods: config.show_agents_without_mods,
           deleteArchiveAfterInstall: config.delete_archive_after_install,
         });
         this._cdr.markForCheck();
@@ -104,6 +111,22 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
     this._dialogRef.close();
   }
 
+  public openAddCharacterDialog(): void {
+    this._dialog
+      .open(AddCharacterDialogComponent, {
+        width: '520px',
+        disableClose: true,
+      })
+      .afterClosed()
+      .subscribe({
+        next: async (created: boolean) => {
+          if (created) {
+            await this._mainService.refreshAgents();
+          }
+        },
+      });
+  }
+
   public handleSaveConfig(): void {
     const config: AppConfigs = {
       blur: this.configsForm.controls.blur.value,
@@ -115,6 +138,8 @@ export class ConfigDialogComponent implements OnInit, OnDestroy {
       user_ini_path: this.configsForm.controls.userIniPath.value,
       show_all_active_when_empty:
         this.configsForm.controls.showAllActiveWhenEmpty.value,
+      show_agents_without_mods:
+        this.configsForm.controls.showAgentsWithoutMods.value,
       delete_archive_after_install:
         this.configsForm.controls.deleteArchiveAfterInstall.value,
     };

@@ -64,6 +64,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke(IpcHandler.PRESET_BATCH_UPDATE, changes),
   deletePreset: (presetId) =>
     ipcRenderer.invoke(IpcHandler.PRESET_DELETE, presetId),
+
+  // Characters
+  listCharacters: () => ipcRenderer.invoke(IpcHandler.CHARACTER_LIST),
+  createCharacter: (payload) =>
+    ipcRenderer.invoke(IpcHandler.CHARACTER_CREATE, payload),
 });
 
 contextBridge.exposeInMainWorld("isElectron", true);

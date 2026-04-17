@@ -67,6 +67,13 @@ export interface ElectronAPI {
   deletePreset(
     presetId: string,
   ): Promise<{ success: boolean; activeId?: string; preset?: Preset; error?: string }>;
+
+  // Characters
+  listCharacters(): Promise<{ success: boolean; characters?: CustomCharacter[]; error?: string }>;
+  createCharacter(payload: {
+    name: string;
+    sourceImagePath: string;
+  }): Promise<{ success: boolean; character?: CustomCharacter; error?: string }>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -207,6 +214,15 @@ export class ElectronBridgeService {
     return this.call(() => this.api!.deletePreset(presetId));
   }
 
+  // Characters
+  listCharacters() {
+    return this.call(() => this.api!.listCharacters());
+  }
+
+  createCharacter(payload: { name: string; sourceImagePath: string }) {
+    return this.call(() => this.api!.createCharacter(payload));
+  }
+
   quitApp(): void {
     return this._api()!.quitApp();
   }
@@ -230,4 +246,11 @@ export interface Preset {
   mods: Record<string, boolean>;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface CustomCharacter {
+  id: number;
+  name: string;
+  portraitPath: string;
+  createdAt: number;
 }

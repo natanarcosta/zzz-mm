@@ -16,6 +16,7 @@ function registerConfigIpc(ipcMain, app) {
         disable_others: true,
         user_ini_path: "",
         show_all_active_when_empty: true,
+        show_agents_without_mods: false,
         delete_archive_after_install: true,
       };
 
@@ -36,6 +37,10 @@ function registerConfigIpc(ipcMain, app) {
     }
     if (cfg.delete_archive_after_install === undefined) {
       cfg.delete_archive_after_install = true;
+      mutated = true;
+    }
+    if (cfg.show_agents_without_mods === undefined) {
+      cfg.show_agents_without_mods = false;
       mutated = true;
     }
     if (mutated) {
