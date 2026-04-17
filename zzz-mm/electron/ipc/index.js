@@ -6,12 +6,17 @@ const { registerSystemHandlers } = require("./system.handlers");
 const { registerSymlinkIpc } = require("./symlink.handlers");
 const { registerSyncIniHandlers } = require("./sync-ini.handlers");
 const { registerPresetHandlers } = require("./preset.handlers");
+const { registerCharacterHandlers } = require("./character.handlers");
 
 function registerIpcHandlers(ipcMain, services, app) {
   registerModHandlers(ipcMain, services);
   registerFsIpc(ipcMain);
   registerImageIpc(ipcMain, services);
   registerConfigIpc(ipcMain, app);
+  registerCharacterHandlers(ipcMain, {
+    app,
+    sanitizeFileName: services.sanitizeFileName,
+  });
   registerSystemHandlers(ipcMain, {
     app,
     shell: require("electron").shell,

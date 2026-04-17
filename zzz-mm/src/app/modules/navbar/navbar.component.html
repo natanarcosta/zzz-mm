@@ -4,7 +4,7 @@
     [ngClass]="{ grid: navbarStyle() === navbarTypeEnum.GRID }"
   >
     @for (item of agentsWithMods(); track item.agent.id) {
-      @if (item.hasMods || !hasAnyMods()) {
+      @if (showAgentsWithoutMods() || item.hasMods || !hasAnyMods()) {
         <div
           class="navbar-item"
           (click)="handleSelectAgent(item.agent)"
@@ -14,8 +14,7 @@
           }"
         >
           <img
-            [ngSrc]="'assets/char-portraits/' + item.agent.id + '.png'"
-            fill
+            [src]="getPortrait(item.agent)"
           />
           <span class="agent-name">
             {{ item.agent.name | agentName }}

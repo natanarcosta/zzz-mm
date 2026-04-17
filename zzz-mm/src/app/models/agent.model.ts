@@ -1,6 +1,7 @@
 export interface ZZZAgent {
   name: string;
   id: number;
+  portraitUrl?: string;
 }
 
 export interface AgentMod {

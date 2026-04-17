@@ -24,6 +24,25 @@
             </mat-slide-toggle>
           </div>
 
+          <!-- Show agents without mods -->
+          <div class="toggle-item full-width">
+            <div class="toggle-label">
+              <span>Show characters without mods</span>
+              <i
+                class="fa-solid fa-circle-question"
+                matTooltip="When enabled, characters will be shown in the sidebar even if there are no mods for them"
+              ></i>
+            </div>
+
+            <mat-slide-toggle formControlName="showAgentsWithoutMods">
+              {{
+                configsForm.get("showAgentsWithoutMods")?.value
+                  ? "Enabled"
+                  : "Disabled"
+              }}
+            </mat-slide-toggle>
+          </div>
+
           <!-- Auto Fetch -->
           <div class="toggle-item">
             <div class="toggle-label">
@@ -140,6 +159,12 @@
             class="fa-solid fa-circle-question"
             matTooltip="Switches between agent selection types"
           ></i>
+        </div>
+
+        <div class="field-wrapper">
+          <button mat-flat-button color="primary" (click)="openAddCharacterDialog()">
+            Add Character
+          </button>
         </div>
       </form>
     }

@@ -6,6 +6,12 @@ const IpcHandler = {
   SAVE_CONFIG: "save-config",
 
   // =====================
+  // CHARACTERS
+  // =====================
+  CHARACTER_LIST: "character-list",
+  CHARACTER_CREATE: "character-create",
+
+  // =====================
   // FILE SYSTEM
   // =====================
   READ_FOLDER: "read-folder",

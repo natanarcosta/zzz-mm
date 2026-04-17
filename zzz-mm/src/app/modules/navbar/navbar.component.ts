@@ -1,4 +1,4 @@
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ZZZAgent } from '../../models/agent.model';
 import { MainService } from '../../services/main.service';
@@ -12,7 +12,7 @@ import { ModIndexService } from '../../services/mod-index.service';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
   standalone: true,
-  imports: [CommonModule, NgOptimizedImage, AgentNamePipe],
+  imports: [CommonModule, AgentNamePipe],
 })
 export class NavbarComponent {
   private _mainService = inject(MainService);
@@ -23,6 +23,7 @@ export class NavbarComponent {
   selectedAgent = signal<ZZZAgent | null>(null);
   navbarStyle = signal<NavbarTypeEnum>(NavbarTypeEnum.LIST);
   navbarTypeEnum = NavbarTypeEnum;
+  showAgentsWithoutMods = signal<boolean>(false);
 
   agentsWithMods = computed(() => {
     const modsByAgent = this._modIndex.modsByAgent();
@@ -39,9 +40,17 @@ export class NavbarComponent {
     return false;
   });
 
+  getPortrait(agent: ZZZAgent): string {
+    if (agent.portraitUrl) return agent.portraitUrl;
+    return `assets/char-portraits/${agent.id}.png`;
+  }
+
   constructor() {
     this._configService.configReady.subscribe((config) =>
-      this.navbarStyle.set(config.navbar_type),
+      {
+        this.navbarStyle.set(config.navbar_type);
+        this.showAgentsWithoutMods.set(!!config.show_agents_without_mods);
+      },
     );
 
     this._mainService.agents$.subscribe((agents) => this.agents.set(agents));

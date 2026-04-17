@@ -13,6 +13,7 @@ export interface AppConfigs {
   disable_others: boolean;
   user_ini_path: string;
   show_all_active_when_empty: boolean;
+  show_agents_without_mods: boolean;
   delete_archive_after_install: boolean;
 }
 

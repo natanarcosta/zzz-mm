@@ -51,6 +51,7 @@ export class ModListComponent implements OnInit, OnDestroy {
   public selectedAgent = signal<ZZZAgent | null>(null);
   public showAllActiveWhenEmpty = signal<boolean>(true);
   private _agentNameToId = signal<Map<string, number>>(new Map());
+  private _agentsByName = signal<Map<string, ZZZAgent>>(new Map());
   public enableShuffleMod = computed(() => {
     const selectedAgent = this.selectedAgent();
     if (!selectedAgent) return false;
@@ -103,9 +104,14 @@ export class ModListComponent implements OnInit, OnDestroy {
     this._mainService.agents$
       .pipe(takeUntil(this._onDestroy))
       .subscribe((agents) => {
-        const map = new Map<string, number>();
-        for (const a of agents) map.set(a.name, a.id);
-        this._agentNameToId.set(map);
+        const idMap = new Map<string, number>();
+        const agentMap = new Map<string, ZZZAgent>();
+        for (const a of agents) {
+          idMap.set(a.name, a.id);
+          agentMap.set(a.name, a);
+        }
+        this._agentNameToId.set(idMap);
+        this._agentsByName.set(agentMap);
       });
 
     this._configService.configReady.subscribe({
@@ -249,6 +255,10 @@ export class ModListComponent implements OnInit, OnDestroy {
   public getPortraitForMod(mod: AgentMod): string | undefined {
     const character = mod.json?.character;
     if (!character) return undefined;
+
+    const agent = this._agentsByName().get(character);
+    if (agent?.portraitUrl) return agent.portraitUrl;
+
     const id = this._agentNameToId().get(character);
     if (typeof id === 'number') return `assets/char-portraits/${id}.png`;
     return undefined;
