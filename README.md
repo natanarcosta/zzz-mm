@@ -50,3 +50,6 @@ MyMod/
 ⚠️ Disclaimer
 Not affiliated with or endorsed by HoYoverse.
 Zenless Zone Zero is a trademark of its respective owners.
+
+### Portraits
+Source: https://zenless.hoyoverse.com/en-us/character
