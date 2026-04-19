@@ -155,27 +155,32 @@ export class ModListComponent implements OnInit, OnDestroy {
   }
 
   public async handleActivateMod(mod: AgentMod) {
-    await this._modManagerService.handleActivateMod(mod);
-    if (this._configService.config.disable_others) {
-      const modIndex = this.selectedAgentMods()?.findIndex(
-        (_mod) => _mod.folderName === mod.folderName,
-      );
-      if (modIndex && modIndex < 0) return;
+    if (mod.json?.broken) return;
 
-      const toDisable = this.selectedAgentMods()?.filter(
-        (_, i) => i !== modIndex,
-      );
-      if (!toDisable?.length) return;
+    const allowedMultipleMods = [0, 1];
+    const currentAgent = this.selectedAgent();
+    const skip = currentAgent
+      ? allowedMultipleMods.includes(currentAgent.id)
+      : false;
 
-      for (const disableMod of toDisable) {
-        if (!disableMod) continue;
-        await this.handleDisableMod(disableMod);
-      }
+    if (this._configService.config.disable_others && !skip) {
+      const mods = this.selectedAgentMods() ?? [];
+      const isSkin = !!mod.json?.isSkinMod;
+      const sameType = mods.filter(
+        (m) => m.folderName !== mod.folderName && !!m.json?.isSkinMod === isSkin,
+      );
+      const changes = [
+        { modId: mod.folderName, enabled: true },
+        ...sameType.map((m) => ({ modId: m.folderName, enabled: false })),
+      ];
+      await this._presetService.updateModsBatch(changes);
+    } else {
+      await this._presetService.updateMod(mod.folderName, true);
     }
   }
 
   public async handleDisableMod(mod: AgentMod) {
-    await this._modManagerService.handleRemoveMod(mod);
+    await this._presetService.updateMod(mod.folderName, false);
   }
 
   public handleAddNewMod() {
@@ -221,10 +226,14 @@ export class ModListComponent implements OnInit, OnDestroy {
     // If enabling and config says disable others, turn off others for this agent
     if (willEnable && this._configService.config.disable_others && !skip) {
       const mods = sameAgentMods ?? [];
-      const changes = mods.map((m) => ({
-        modId: m.folderName,
-        enabled: m.folderName === mod.folderName,
-      }));
+      const isSkin = !!mod.json?.isSkinMod;
+      const sameType = mods.filter(
+        (m) => m.folderName !== mod.folderName && !!m.json?.isSkinMod === isSkin,
+      );
+      const changes = [
+        { modId: mod.folderName, enabled: true },
+        ...sameType.map((m) => ({ modId: m.folderName, enabled: false })),
+      ];
       await this._presetService.updateModsBatch(changes);
     } else {
       await this._presetService.updateMod(mod.folderName, willEnable);
@@ -244,11 +253,15 @@ export class ModListComponent implements OnInit, OnDestroy {
     // Skip if already active
     if (this._presetService.isModEnabled(randomMod.folderName)) return;
 
-    // Enable picked and disable others in the same agent in batch
-    const changes = agentMods.map((m) => ({
-      modId: m.folderName,
-      enabled: m.folderName === randomMod.folderName,
-    }));
+    // Enable picked and disable others of the same type (default vs skin)
+    const isSkin = !!randomMod.json?.isSkinMod;
+    const sameType = agentMods.filter(
+      (m) => m.folderName !== randomMod.folderName && !!m.json?.isSkinMod === isSkin,
+    );
+    const changes = [
+      { modId: randomMod.folderName, enabled: true },
+      ...sameType.map((m) => ({ modId: m.folderName, enabled: false })),
+    ];
     await this._presetService.updateModsBatch(changes);
   }
 
