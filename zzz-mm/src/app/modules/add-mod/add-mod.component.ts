@@ -40,6 +40,7 @@ import {
   GameBananaModData,
 } from '../../services/gamebanana.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-add-mod',
@@ -57,6 +58,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatIconModule,
     MatAutocompleteModule,
     MatProgressBarModule,
+    MatSlideToggleModule,
   ],
 })
 export class AddModComponent implements OnInit, OnDestroy {
@@ -97,6 +99,7 @@ export class AddModComponent implements OnInit, OnDestroy {
       validators: [Validators.required],
     }),
     url: new FormControl('', { nonNullable: true }),
+    isSkinMod: new FormControl(false, { nonNullable: true }),
   });
 
   get electronAPI() {
@@ -237,6 +240,7 @@ export class AddModComponent implements OnInit, OnDestroy {
         ...this.form.value,
         modName: this.form.controls.name.value,
         character: characterName,
+        isSkinMod: !!this.form.controls.isSkinMod.value,
         localInstalledAt: now,
         localUpdatedAt: now,
         gamebananaPreviewUrl:

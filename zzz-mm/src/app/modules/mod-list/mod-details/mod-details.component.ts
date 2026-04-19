@@ -51,6 +51,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ModIndexService } from '../../../services/mod-index.service';
 import { MatMenuModule } from '@angular/material/menu';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-mod-details',
@@ -71,6 +72,7 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
     AgentNamePipe,
     MatIconModule,
     MatMenuModule,
+    MatSlideToggleModule,
   ],
 })
 export class ModDetailsComponent implements OnInit, OnDestroy {
@@ -96,6 +98,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
     description: new FormControl(),
     url: new FormControl(),
     modName: new FormControl(),
+    isSkinMod: new FormControl(false, { nonNullable: true }),
   });
   public filteredAgents$!: Observable<ZZZAgent[]>;
   public agents!: ZZZAgent[];
@@ -219,6 +222,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       character: this.selectedAgent(),
       description: mod.json?.description,
       url: mod.json?.url,
+      isSkinMod: !!mod.json?.isSkinMod,
     });
 
     this.loadFolderSize();
@@ -301,9 +305,11 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
       description: string;
       url: string;
       modName: string;
+      isSkinMod: boolean;
     } = {
       ...this.form.getRawValue(),
       character: this.form.controls.character.value.name,
+      isSkinMod: !!this.form.controls.isSkinMod.value,
     };
     const mod = this.mod();
     if (!mod || !mod.json) return;
@@ -316,6 +322,7 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
         description: data.description,
         url: data.url,
         modName: data.modName,
+        isSkinMod: !!data.isSkinMod,
       },
     });
 
@@ -471,11 +478,19 @@ export class ModDetailsComponent implements OnInit, OnDestroy {
 
     if (this._configService.config.disable_others && !skip) {
       const list = this.agentMods() ?? [];
+      const isSkin = !!mod.json?.isSkinMod;
+      const sameType = list.filter(
+        (m) => m.folderName !== mod.folderName && !!m.json?.isSkinMod === isSkin,
+      );
       const changes = list.map((m) => ({
         modId: m.folderName,
         enabled: m.folderName === mod.folderName,
       }));
-      await this._presetService.updateModsBatch(changes);
+      const pruned = [
+        { modId: mod.folderName, enabled: true },
+        ...sameType.map((m) => ({ modId: m.folderName, enabled: false })),
+      ];
+      await this._presetService.updateModsBatch(pruned);
     } else {
       await this._presetService.updateMod(mod.folderName, true);
     }
